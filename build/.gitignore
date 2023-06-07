@@ -1,0 +1,8 @@
+ALL
+ARM
+SHARC0
+SHARC1
+EV-SC594-EZKIT*.*xe
+EV-SC594-EZKIT*.ldr
+linker_log*
+*.log
