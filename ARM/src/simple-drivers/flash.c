@@ -9,11 +9,6 @@
  * software may not be used except as expressly authorized under the license.
  */
 
-/*
- * Place code/data by default in external memory
- */
-#include "external_memory.h"
-
 #include <string.h>
 #include "flash.h"
 

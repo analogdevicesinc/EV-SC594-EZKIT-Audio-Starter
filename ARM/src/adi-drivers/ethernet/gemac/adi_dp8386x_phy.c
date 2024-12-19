@@ -63,7 +63,7 @@
  */
 static void wait_millisec(void)
 {
-	WAIT_MILLISECOND_CODE
+    WAIT_MILLISECOND_CODE
 }
 /**
  * @brief     Sleeps for specified number of milli-seconds
@@ -122,7 +122,7 @@ static int32_t poll_mii_done(ADI_PHY_DEVICE* pPhyDevice)
  */
 static uint32_t raw_phy_write   (
                                  ADI_PHY_DEVICE* pPhyDevice,
-								 const uint16_t  PhyAddress,
+                                 const uint16_t  PhyAddress,
                                  const uint16_t  RegAddr,
                                  const uint32_t  Data
                                  )
@@ -156,7 +156,7 @@ static uint32_t raw_phy_write   (
  */
 static uint16_t raw_phy_read (
                                   ADI_PHY_DEVICE*   pPhyDevice,
-								  const uint16_t    PhyAddress,
+                                  const uint16_t    PhyAddress,
                                   const uint16_t    RegAddr
                                   )
 {
@@ -174,20 +174,38 @@ static uint16_t raw_phy_read (
     return (uint16_t)pEmacRegs->EMAC_GMII_DATA;
 }
 
+/***********************************************************************
+ * ADIN1300 Phy Routines
+ **********************************************************************/
+#define ADIN1300_OUI_VENDOR      0x0283
+#define ADIN1300_OUT_MODEL       0xBC30
+#define ADIN1200_OUT_MODEL       0xBC20
+
+ADI_PHY_RESULT adin1300_phy_init (
+                                 ADI_PHY_DEVICE* pPhyDevice,
+                                 ADI_ETHER_HANDLE        const hDevice,
+                                 ADI_PHY_DEV_INIT *      const pInitParams
+                                 );
+ADI_PHY_RESULT adin1300_phy_uninit (ADI_PHY_DEVICE* pPhyDevice);
+ADI_PHY_RESULT adin1300_phy_get_status(ADI_PHY_DEVICE* pPhyDevice, uint32_t* const nStatus);
+/***********************************************************************
+ * ADIN1300 Phy Routines
+ **********************************************************************/
+
 ADI_PHY_RESULT dp8386x_phy_init (
-                                 ADI_PHY_DEVICE* 		 pPhyDevice,
+                                 ADI_PHY_DEVICE*         pPhyDevice,
                                  ADI_ETHER_HANDLE        const hDevice,
                                  ADI_PHY_DEV_INIT *      const pInitParams
                                  )
 {
-    uint16_t 		phy_vendor0;
-    uint16_t 		phy_vendor1;
-    uint16_t 		phy_model;
+    uint16_t        phy_vendor0;
+    uint16_t        phy_vendor1;
+    uint16_t        phy_model;
 
     /* Set the ether device handle */
     pPhyDevice->hEtherDevice = hDevice;
 
-	// Try to reset PHY's at address 0 and 1
+    // Try to reset PHY's at address 0 and 1
     raw_phy_write(pPhyDevice, 0, REG_PHY_MODECTL, PHY_MODECTL_RESET);
     raw_phy_write(pPhyDevice, 1, REG_PHY_MODECTL, PHY_MODECTL_RESET);
 
@@ -198,9 +216,11 @@ ADI_PHY_RESULT dp8386x_phy_init (
     phy_vendor1 = raw_phy_read(pPhyDevice,1, REG_PHY_PHYID1);
 
     if(phy_vendor0 == DP83865_OUI_VENDOR)
-    	pPhyDevice->PhyAddress = 0;
+        pPhyDevice->PhyAddress = 0;
     else if(phy_vendor1 == DP83865_OUI_VENDOR)
-    	pPhyDevice->PhyAddress = 1;
+        pPhyDevice->PhyAddress = 1;
+    else if(phy_vendor0 == ADIN1300_OUI_VENDOR)
+        pPhyDevice->PhyAddress = 0;
     else
     {
         ETHER_PRINT("Phy identification failed vendor ID\n");
@@ -214,15 +234,21 @@ ADI_PHY_RESULT dp8386x_phy_init (
     // Setup for appropriate PHY
     if (phy_model == DP83865_OUT_MODEL)
     {
-    	pPhyDevice->uninit = dp83865_phy_uninit;
-    	pPhyDevice->getStatus = dp83865_phy_get_status;
-    	return dp83865_phy_init( pPhyDevice, hDevice, pInitParams );
+        pPhyDevice->uninit = dp83865_phy_uninit;
+        pPhyDevice->getStatus = dp83865_phy_get_status;
+        return dp83865_phy_init( pPhyDevice, hDevice, pInitParams );
     }
     else if (phy_model == DP83867_OUT_MODEL)
     {
-    	pPhyDevice->uninit = dp83867_phy_uninit;
-    	pPhyDevice->getStatus = dp83867_phy_get_status;
-    	return dp83867_phy_init( pPhyDevice, hDevice, pInitParams );
+        pPhyDevice->uninit = dp83867_phy_uninit;
+        pPhyDevice->getStatus = dp83867_phy_get_status;
+        return dp83867_phy_init( pPhyDevice, hDevice, pInitParams );
+    }
+    else if (phy_model == ADIN1300_OUT_MODEL)
+    {
+        pPhyDevice->uninit = adin1300_phy_uninit;
+        pPhyDevice->getStatus = adin1300_phy_get_status;
+        return adin1300_phy_init( pPhyDevice, hDevice, pInitParams );
     }
     else
     {
@@ -234,12 +260,12 @@ ADI_PHY_RESULT dp8386x_phy_init (
 
 ADI_PHY_RESULT dp8386x_phy_uninit (ADI_PHY_DEVICE* pPhyDevice)
 {
-	// If we get here, report runtime error
-	return ADI_PHY_RESULT_FAILED;
+    // If we get here, report runtime error
+    return ADI_PHY_RESULT_FAILED;
 }
 
 ADI_PHY_RESULT dp8386x_phy_get_status(ADI_PHY_DEVICE* pPhyDevice, uint32_t* const nStatus)
 {
  // If we get here, report runtime error
-	return ADI_PHY_RESULT_FAILED;
+    return ADI_PHY_RESULT_FAILED;
 }

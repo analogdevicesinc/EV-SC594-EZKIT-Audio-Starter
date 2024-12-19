@@ -62,11 +62,11 @@
 #ifdef   GEMAC_SUPPORT_EMAC0
 
 #if EMAC0_PHY_NUM_DEV > 0
-#	if (EMAC0_PHY_DEV == 0)
-#		if (EMAC0_PHY0_DEV == PHY_DEV_DP83848)
-#			define __DP83848_EMAC0_PHY0__
-#		endif
-#	endif
+#   if (EMAC0_PHY_DEV == 0)
+#       if (EMAC0_PHY0_DEV == PHY_DEV_DP83848)
+#           define __DP83848_EMAC0_PHY0__
+#       endif
+#   endif
 #endif
 
 #endif
@@ -74,11 +74,11 @@
 #ifdef   GEMAC_SUPPORT_EMAC1
 
 #if EMAC1_PHY_NUM_DEV > 0
-#	if (EMAC1_PHY_DEV == 0)
-#		if (EMAC1_PHY0_DEV == PHY_DEV_DP83848)
-#			define __DP83848_EMAC1_PHY0__
-#		endif
-#	endif
+#   if (EMAC1_PHY_DEV == 0)
+#       if (EMAC1_PHY0_DEV == PHY_DEV_DP83848)
+#           define __DP83848_EMAC1_PHY0__
+#       endif
+#   endif
 #endif
 
 #endif
@@ -282,22 +282,22 @@ static uint32_t dp83848_phy_write (
 static void dp83848_ack_phyint (ADI_PHY_DEVICE* pPhyDevice)
 {
     uint16_t VAR_UNUSED_DECR(phy_data);
-    
-    
-    
+
+
+
     phy_data = dp83848_phy_read(pPhyDevice, REG_PHY_MISR);
     phy_data = dp83848_phy_read(pPhyDevice, REG_PHY_MICR);
     VAR_UNUSED(phy_data);
-    
+
 
 #ifdef __DP83848_EMAC0_PHY0__
     if ((pPhyDevice->nEMACDevNum == 0) && (pPhyDevice->nPHYDevNum == 0)) {
-    	EMAC0_PHY0_DP83848_ACK_PHY_INT;
+        EMAC0_PHY0_DP83848_ACK_PHY_INT;
     }
 #endif
 #ifdef __DP83848_EMAC1_PHY0__
     if ((pPhyDevice->nEMACDevNum == 1) && (pPhyDevice->nPHYDevNum == 0)) {
-    	EMAC1_PHY0_DP83848_ACK_PHY_INT;
+        EMAC1_PHY0_DP83848_ACK_PHY_INT;
     }
 #endif
 }
@@ -384,6 +384,24 @@ static void PHYInterruptHandler(uint32_t IID, void *pCBParm)
     dp83848_ack_phyint(pPhyDevice);
 }
 
+/***********************************************************************
+ * ADIN1300 Phy Routines
+ **********************************************************************/
+#define ADIN1300_OUI_VENDOR      0x0283
+#define ADIN1300_OUT_MODEL       0xBC30
+#define ADIN1200_OUT_MODEL       0xBC20
+
+ADI_PHY_RESULT adin1300_phy_init (
+                                 ADI_PHY_DEVICE* pPhyDevice,
+                                 ADI_ETHER_HANDLE        const hDevice,
+                                 ADI_PHY_DEV_INIT *      const pInitParams
+                                 );
+ADI_PHY_RESULT adin1300_phy_uninit (ADI_PHY_DEVICE* pPhyDevice);
+ADI_PHY_RESULT adin1300_phy_get_status(ADI_PHY_DEVICE* pPhyDevice, uint32_t* const nStatus);
+/***********************************************************************
+ * ADIN1300 Phy Routines
+ **********************************************************************/
+
 /**
  * @brief       Initializes the PHY
  *
@@ -401,7 +419,7 @@ ADI_PHY_RESULT dp83848_phy_init (
     uint16_t phy_data;
     uint16_t VAR_UNUSED_DECR(phy_id1);
     uint16_t VAR_UNUSED_DECR(phy_id2);
-    
+
 
     /* Set the callback function and ether device handle */
     pPhyDevice->pfCallback = pInitParams->pfCallback;
@@ -423,15 +441,19 @@ ADI_PHY_RESULT dp83848_phy_init (
     }
 
     if (pInitParams->bResetOnly) {
-    	return ADI_PHY_RESULT_SUCCESS;
+        return ADI_PHY_RESULT_SUCCESS;
     }
 
     /* read phy identifier registers */
     phy_id1 = dp83848_phy_read(pPhyDevice,REG_PHY_PHYID1);
     phy_id2 = dp83848_phy_read(pPhyDevice, REG_PHY_PHYID2);
-    
-    VAR_UNUSED(phy_id1);
-    VAR_UNUSED(phy_id2);
+
+    /* short-circuit if ADIN1200 detected */
+    if ((phy_id1 == ADIN1300_OUI_VENDOR) && (phy_id2 == ADIN1200_OUT_MODEL)) {
+        pPhyDevice->uninit = adin1300_phy_uninit;
+        pPhyDevice->getStatus = adin1300_phy_get_status;
+        return adin1300_phy_init( pPhyDevice, hDevice, pInitParams );
+    }
 
     /* advertise flow control supported */
     phy_data = dp83848_phy_read(pPhyDevice,REG_PHY_ANAR);
@@ -471,22 +493,22 @@ ADI_PHY_RESULT dp83848_phy_init (
 
     /* acknowledge any latched interrupts */
     dp83848_ack_phyint(pPhyDevice);
-    
+
 
 #ifdef __DP83848_EMAC0_PHY0__
     if ((pPhyDevice->nEMACDevNum == 0) && (pPhyDevice->nPHYDevNum == 0)) {
-    	EMAC0_PHY0_DP83848_PORT_CFG;
-    	adi_int_InstallHandler(EMAC0_PHY0_DP83848_INT,PHYInterruptHandler,(void*)pPhyDevice,true);
+        EMAC0_PHY0_DP83848_PORT_CFG;
+        adi_int_InstallHandler(EMAC0_PHY0_DP83848_INT,PHYInterruptHandler,(void*)pPhyDevice,true);
     }
 #endif
 #ifdef __DP83848_EMAC1_PHY0__
     if ((pPhyDevice->nEMACDevNum == 1) && (pPhyDevice->nPHYDevNum == 0)) {
-    	EMAC1_PHY0_DP83848_PORT_CFG;
-    	adi_int_InstallHandler(EMAC1_PHY0_DP83848_INT,PHYInterruptHandler,(void*)pPhyDevice,true);
+        EMAC1_PHY0_DP83848_PORT_CFG;
+        adi_int_InstallHandler(EMAC1_PHY0_DP83848_INT,PHYInterruptHandler,(void*)pPhyDevice,true);
     }
 #endif
 
-    
+
     dp83848_phy_write(pPhyDevice, REG_PHY_MICR, PHY_MICR_INTEN | PHY_MICR_INT_OE);
 
     /* enable phy interrupts  */
@@ -563,14 +585,14 @@ ADI_PHY_RESULT dp83848_phy_uninit (ADI_PHY_DEVICE* pPhyDevice)
 {
 #ifdef __DP83848_EMAC0_PHY0__
     if ((pPhyDevice->nEMACDevNum == 0) && (pPhyDevice->nPHYDevNum == 0)) {
-    	adi_int_EnableInt(EMAC0_PHY0_DP83848_INT, false);
-    	adi_int_UninstallHandler(EMAC0_PHY0_DP83848_INT);
+        adi_int_EnableInt(EMAC0_PHY0_DP83848_INT, false);
+        adi_int_UninstallHandler(EMAC0_PHY0_DP83848_INT);
     }
 #endif
 #ifdef __DP83848_EMAC1_PHY0__
     if ((pPhyDevice->nEMACDevNum == 1) && (pPhyDevice->nPHYDevNum == 0)) {
-    	adi_int_EnableInt(EMAC1_PHY0_DP83848_INT, false);
-    	adi_int_UninstallHandler(EMAC1_PHY0_DP83848_INT);
+        adi_int_EnableInt(EMAC1_PHY0_DP83848_INT, false);
+        adi_int_UninstallHandler(EMAC1_PHY0_DP83848_INT);
     }
 #endif
 

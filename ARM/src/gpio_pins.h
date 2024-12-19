@@ -14,11 +14,17 @@
 
 #include <services/gpio/adi_gpio.h>
 
+enum GPIO_FLAGS {
+    GPIO_FLAGS_NONE = 0x00000000,
+    GPIO_FLAGS_PUE =  0x00000001,  // Pull-up enable
+};
+
 typedef struct _GPIO_CONFIG {
     ADI_GPIO_PORT port;
     uint32_t pinNum;
     ADI_GPIO_DIRECTION dir;
     bool state;
+    uint32_t flags;
 } GPIO_CONFIG;
 
 typedef enum _GPIO_PIN_ID {
@@ -29,9 +35,20 @@ typedef enum _GPIO_PIN_ID {
     GPIO_PIN_SOMCRR_LED10,
     GPIO_PIN_SOMCRR_LED9,
     GPIO_PIN_SOMCRR_A2B1_IRQ,
+    GPIO_PIN_SOMCRR_A2B2_IRQ,
     GPIO_PIN_SOMCRR_PTPPPS0,
+    GPIO_PIN_SOMCRR_USB_PHY_RESET,
+    GPIO_PIN_SOMCRR_GIGe_INT,
+#if 0
+    GPIO_PIN_DEBUG_0,
+#endif
     GPIO_PIN_MAX
 } GPIO_PIN_ID;
+
+bool gpio_get_pin(GPIO_CONFIG *pinConfig, GPIO_PIN_ID pinId);
+void gpio_set_pin(GPIO_CONFIG *pinConfig, GPIO_PIN_ID pinId, bool state);
+void gpio_toggle_pin(GPIO_CONFIG *pinConfig, GPIO_PIN_ID pinId);
+void gpio_init_pins(GPIO_CONFIG *pinConfig, int numPins);
 
 extern GPIO_CONFIG gpioPins[];
 

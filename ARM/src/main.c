@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2022 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2024 - Analog Devices Inc. All Rights Reserved.
  * This software is proprietary and confidential to Analog Devices, Inc.
  * and its licensors.
  *
@@ -29,27 +29,32 @@
 #include "sport_simple.h"
 #include "uart_simple.h"
 #include "uart_stdio.h"
+#include "uart_simple_cdc.h"
 
 /* Simple service includes */
 #include "cpu_load.h"
 #include "syslog.h"
 #include "sae.h"
+#include "sae_pro.h"
 #include "fs_devman.h"
 #include "fs_devio.h"
-#include "fs_dev_romfs.h"
 #include "fs_dev_fatfs.h"
 #include "fs_dev_spiffs.h"
 
 /* oss-services includes */
 #include "shell.h"
 #include "umm_malloc.h"
-#include "romfs.h"
+#include "spiffs.h"
 
 /* Project includes */
 #include "context.h"
 #include "init.h"
 #include "clocks.h"
 #include "util.h"
+#include "wav_audio.h"
+#include "vu_audio.h"
+#include "rtp_audio.h"
+#include "vban_audio.h"
 #include "a2b_slave.h"
 #include "clock_domain.h"
 #include "spiffs_fs.h"
@@ -57,11 +62,31 @@
 #include "task_cfg.h"
 #include "ss_init.h"
 #include "a2b_irq.h"
+#include "uac2.h"
 #include "ethernet_init.h"
 #include "ipc.h"
+#include "pushbutton.h"
+#include "exception.h"
 
 /* Application context */
 APP_CONTEXT mainAppContext;
+
+/* Select proper driver API for stdio operations (set in makefile) */
+#if defined(USBC0_ENABLE) && defined(USB_CDC_STDIO)
+#define uart_open uart_cdc_open
+#define uart_setProtocol uart_cdc_setProtocol
+#define uart_write uart_cdc_write
+#define uart_read uart_cdc_read
+#else
+#define uart_open uart_open
+#define uart_setProtocol uart_setProtocol
+#define uart_write uart_write
+#define uart_read uart_read
+#endif
+
+/***********************************************************************
+ * Defines
+ **********************************************************************/
 
 /***********************************************************************
  * Shell console I/O functions
@@ -121,28 +146,45 @@ void delay(unsigned ms)
     vTaskDelay(pdMS_TO_TICKS(ms));
 }
 
+void util_set_time_unix(struct timeval *now)
+{
+    APP_CONTEXT *context = &mainAppContext;
+    vTaskSuspendAll();
+    context->now = now->tv_sec * configTICK_RATE_HZ;
+    xTaskResumeAll();
+}
+
+int util_gettimeofday(struct timeval *tp, void *tzvp)
+{
+    APP_CONTEXT *context = &mainAppContext;
+    if (tp) {
+        vTaskSuspendAll();
+        tp->tv_sec = context->now / configTICK_RATE_HZ;
+        tp->tv_usec = 0;
+        xTaskResumeAll();
+    }
+    return(0);
+}
+
 time_t util_time(time_t *tloc)
 {
     APP_CONTEXT *context = &mainAppContext;
     time_t t;
 
-    /*
-     * Our time starts at zero so add 10 years + 2 days of milliseconds
-     * to adjust UNIX epoch of 1970 to FAT epoch of 1980 to keep
-     * FatFS happy.  See get_fattime() in diskio.c.
-     *
-     * https://www.timeanddate.com/date/timeduration.html
-     *
-     */
     vTaskSuspendAll();
-    t = (context->now + (uint64_t)315532800000) / configTICK_RATE_HZ;
+    t = context->now / configTICK_RATE_HZ;
     xTaskResumeAll();
 
     if (tloc) {
-        memcpy(tloc, &t, sizeof(*tloc));
+        *tloc = t;
     }
 
     return(t);
+}
+
+uint32_t rtosTimeMs()
+{
+    return(xTaskGetTickCount() * (1000 / configTICK_RATE_HZ));
 }
 
 /***********************************************************************
@@ -183,12 +225,9 @@ static void ipcMsgHandler(SAE_CONTEXT *saeContext, SAE_MSG_BUFFER *buffer,
 {
     APP_CONTEXT *context = (APP_CONTEXT *)usrPtr;
     IPC_MSG *msg = (IPC_MSG *)payload;
-    IPC_MSG_AUDIO *audio;
     IPC_MSG_CYCLES *cycles;
     SAE_RESULT result;
     uint32_t max, i;
-
-    UNUSED(context);
 
     /* Process the message */
     switch (msg->type) {
@@ -200,9 +239,6 @@ static void ipcMsgHandler(SAE_CONTEXT *saeContext, SAE_MSG_BUFFER *buffer,
             break;
         case IPC_TYPE_SHARC1_READY:
             context->sharc1Ready = true;
-            break;
-        case IPC_TYPE_AUDIO:
-            audio = (IPC_MSG_AUDIO *)&msg->audio;
             break;
         case IPC_TYPE_CYCLES:
             cycles = (IPC_MSG_CYCLES *)&msg->cycles;
@@ -239,10 +275,11 @@ static portTASK_FUNCTION( houseKeepingTask, pvParameters )
     APP_CONTEXT *context = (APP_CONTEXT *)pvParameters;
     SAE_CONTEXT *saeContext = context->saeContext;
     SAE_MSG_BUFFER *msgBuffer;
-    TickType_t flashRate, lastFlashTime, clk, lastClk;
-    bool calcLoad;
-    TimerHandle_t ledFlashTimer;
     IPC_MSG *msg;
+
+    TickType_t flashRate, lastFlashTime, clk, lastClk;
+    TimerHandle_t ledFlashTimer;
+    bool calcLoad;
 
     /* Configure the LED to flash at a 1Hz rate */
     flashRate = pdMS_TO_TICKS(1000);
@@ -290,12 +327,15 @@ static portTASK_FUNCTION( houseKeepingTask, pvParameters )
             ipcToCore(saeContext, msgBuffer, IPC_CORE_SHARC1);
         }
 
+        /* Manage system time */
         clk = xTaskGetTickCount();
+        vTaskSuspendAll();
         context->now += (uint64_t)(clk - lastClk);
+        xTaskResumeAll();
         lastClk = clk;
 
         /* Sleep for a while */
-        vTaskDelayUntil( &lastFlashTime, flashRate );
+        vTaskDelayUntil(&lastFlashTime, flashRate);
     }
 }
 
@@ -317,6 +357,7 @@ static void setAppDefaults(APP_CFG *cfg)
     cfg->eth0.netmask = cfgStrDup(DEFAULT_ETH0_NETMASK);
     cfg->eth0.static_ip = DEFAULT_ETH0_STATIC_IP;
     cfg->eth0.default_iface = DEFAULT_ETH0_DEFAULT_IFACE;
+    cfg->eth0.base_hostname = DEFAULT_ETH0_BASE_HOSTNAME;
 
     cfg->eth1.port = EMAC1;
     cfg->eth1.ip_addr = cfgStrDup(DEFAULT_ETH1_IP_ADDR);
@@ -324,6 +365,14 @@ static void setAppDefaults(APP_CFG *cfg)
     cfg->eth1.netmask = cfgStrDup(DEFAULT_ETH1_NETMASK);
     cfg->eth1.static_ip = DEFAULT_ETH1_STATIC_IP;
     cfg->eth1.default_iface = DEFAULT_ETH1_DEFAULT_IFACE;
+    cfg->eth1.base_hostname = DEFAULT_ETH1_BASE_HOSTNAME;
+
+    cfg->usbOutChannels = USB_DEFAULT_OUT_AUDIO_CHANNELS;
+    cfg->usbInChannels = USB_DEFAULT_IN_AUDIO_CHANNELS;
+    cfg->usbWordSize = USB_DEFAULT_WORD_SIZE;
+
+    cfg->a2bI2CAddr = DEFAULT_A2B_I2C_ADDR;
+    cfg->a2b2I2CAddr = DEFAULT_A2B2_I2C_ADDR;
 }
 
 /***********************************************************************
@@ -337,10 +386,7 @@ static void execShellCmdFile(SHELL_CONTEXT *shell)
 
     name = SPIFFS_VOL_NAME "shell.cmd";
     f = fopen(name, "r");
-    if (f == NULL) {
-        name = WRITE_ONCE_VOL_NAME "shell.cmd";
-        f = fopen(name, "r");
-    }
+
     if (f) {
         fclose(f);
         cmd[0] = '\0';
@@ -356,23 +402,21 @@ static portTASK_FUNCTION( startupTask, pvParameters )
     SPI_SIMPLE_RESULT spiResult;
     TWI_SIMPLE_RESULT twiResult;
     SPORT_SIMPLE_RESULT sportResult;
-    int fsckRepaired;
-    int fsckOk;
     FS_DEVMAN_DEVICE *device;
     FS_DEVMAN_RESULT fsdResult;
     s32_t spiffsResult;
 
+    /* Install exception handlers */
+    exception_init();
+
+    /* Log the core clock frequency */
+    syslog_printf("CPU Core Clock: %u MHz", (unsigned)(context->cclk / 1000000));
+
+    /* Load default configuration */
+    setAppDefaults(&context->cfg);
+
     /* Initialize the CPU load module. */
     cpuLoadInit(getTimeStamp, CGU_TS_CLK);
-
-    /* Init the SHARC Audio Engine.  This core is configured to be the
-     * IPC master so this function must run to completion before any
-     * other core calls sae_initialize().
-     */
-    sae_initialize(&context->saeContext, SAE_CORE_IDX_0, true);
-
-    /* Register an IPC message Rx callback */
-    sae_registerMsgReceivedCallback(context->saeContext, ipcMsgHandler, context);
 
     /* Initialize the simple SPI driver */
     spiResult = spi_init();
@@ -387,10 +431,32 @@ static portTASK_FUNCTION( startupTask, pvParameters )
     fs_devman_init();
 
     /* Intialize the filesystem device I/O layer */
-    fs_devio_init();
+    fs_devio_init(NULL);
+
+#if 0
+    /* Open up a global device handle for TWI0 @ 400KHz */
+    twiResult = twi_open(TWI0, &context->twi0Handle);
+    if (twiResult != TWI_SIMPLE_SUCCESS) {
+        syslog_print("Could not open TWI0 device handle!");
+        return;
+    }
+    twi_setSpeed(context->twi0Handle, TWI_SIMPLE_SPEED_400);
+
+    /* Open up a global device handle for TWI1 @ 400KHz */
+    twiResult = twi_open(TWI1, &context->twi1Handle);
+    if (twiResult != TWI_SIMPLE_SUCCESS) {
+        syslog_print("Could not open TWI1 device handle!");
+        return;
+    }
+    twi_setSpeed(context->twi1Handle, TWI_SIMPLE_SPEED_400);
+#endif
 
     /* Open up a global device handle for TWI2 @ 400KHz */
     twiResult = twi_open(TWI2, &context->twi2Handle);
+    if (twiResult != TWI_SIMPLE_SUCCESS) {
+        syslog_print("Could not open TWI2 device handle!");
+        return;
+    }
     twi_setSpeed(context->twi2Handle, TWI_SIMPLE_SPEED_400);
 
     /* Set the adau1962, adau1979, and soft switch device handles to TWI2 */
@@ -403,21 +469,38 @@ static portTASK_FUNCTION( startupTask, pvParameters )
     /* Initialize the soft switches */
     ss_init(context);
 
+    /*
+     * Get the SOMCRR Version.  This function also sets compatible default
+     * soft switch values for Rev D SOMCRR boards.
+     */
+    context->SoMCRRVersion = somcrr_hw_version(context);
+
+    /* Init the SHARC Audio Engine.  This core is configured to be the
+     * IPC master so this function must run to completion before any
+     * other core calls sae_initialize().
+     */
+    sae_initialize(&context->saeContext, IPC_CORE_ARM, true);
+
+    /* Register an IPC message callback */
+    sae_registerMsgReceivedCallback(context->saeContext,
+        ipcMsgHandler, context);
+
+    /* Initialize the SHARC audio buffers in shared L2 SAE memory */
+    sae_buffer_init(context);
+
+#ifdef SHARC_AUDIO_ENABLE
+    /* Start SHARC core */
+    adi_core_enable(ADI_CORE_SHARC0);
+    adi_core_enable(ADI_CORE_SHARC1);
+
+    /* Wait for SHARC cores to become ready */
+    while (!context->sharc0Ready || !context->sharc1Ready) {
+        delay(1);
+    }
+#endif
+
     /* Initialize the flash */
     flash_init(context);
-
-    /* Initialize the wo filesystem */
-    romfs_init(context->flashHandle);
-
-    /* Check the wo filesystem */
-    fsckOk = romfs_fsck(1, &fsckRepaired);
-    if (fsckOk != FS_OK) {
-        syslog_printf("Filesystem corrupt: %s Repaired\n", fsckRepaired ? "" : "Not");
-    }
-
-    /* Hook the wo filesystem into the stdio libraries */
-    device = fs_dev_romfs_device();
-    fsdResult = fs_devman_register(WRITE_ONCE_VOL_NAME, device, NULL);
 
     /* Initialize the SPIFFS filesystem */
     context->spiffsHandle = umm_calloc(1, sizeof(*context->spiffsHandle));
@@ -425,28 +508,42 @@ static portTASK_FUNCTION( startupTask, pvParameters )
     if (spiffsResult == SPIFFS_OK) {
         device = fs_dev_spiffs_device();
         fsdResult = fs_devman_register(SPIFFS_VOL_NAME, device, context->spiffsHandle);
+        fsdResult = fs_devman_set_default(SPIFFS_VOL_NAME);
     } else {
         syslog_print("SPIFFS mount error, reformat via command line\n");
     }
 
-    /* Set the SPIFFS as the default device */
-    if (spiffsResult == SPIFFS_OK) {
-        device = fs_dev_spiffs_device();
-        fsdResult = fs_devman_set_default(SPIFFS_VOL_NAME);
-    }
+    /* Initialize the audio routing table */
+    audio_routing_init(context);
 
-    /* Load default configuration */
-    setAppDefaults(&context->cfg);
+    /* Initialize the wave audio module */
+    wav_audio_init(context);
 
-    /* Initialize the IPC audio buffers in shared L2 SAE memory */
-    sae_buffer_init(context);
+    /* Initialize the vu audio module */
+    vu_audio_init(context);
 
-    /* Initialize A2B in master mode */
+    /* Initialize the RTP audio module */
+    rtp_audio_init(context);
+
+    /* Initialize the VBAN audio module */
+    vban_audio_init(context);
+
+    /* Restart A2B (J10) in master mode */
     context->a2bPresent = a2b_restart(context);
 
-    /* Configure A2B interrupts */
+    /* Restart A2B2 (J11) in master mode */
+    context->a2b2Present = a2b2_restart(context);
+
+    /* Configure A2B interrupt dispatcher */
     a2b_irq_init(context);
+
+#if 0
+    /* Enable A2B HW IRQ */
     a2b_pint_init(context);
+#endif
+
+    /* Configure A2B slave mode handler */
+    a2b_slave_init(context);
 
     /* Disable main MCLK/BCLK */
     disable_mclk(context);
@@ -463,8 +560,11 @@ static portTASK_FUNCTION( startupTask, pvParameters )
     /* Initialize the SPDIF I/O */
     spdif_init(context);
 
-    /* Initialize A2B audio in master mode */
+    /* Initialize A2B (J10) in master mode */
     a2b_master_init(context);
+
+    /* Initialize A2B2 (J11) in master mode */
+    a2b2_master_init(context);
 
     /* Initialize the various audio clock domains */
     clock_domain_init(context);
@@ -477,41 +577,35 @@ static portTASK_FUNCTION( startupTask, pvParameters )
 
     /* Initialize lwIP and the Ethernet interfaces */
     ethernet_init(context, &context->eth[0], &context->cfg.eth0);
+#ifdef EMAC1_ENABLE
     ethernet_init(context, &context->eth[1], &context->cfg.eth1);
+#endif
 
-    /* Start the SHARC cores */
-    adi_core_enable(ADI_CORE_SHARC0);
-    adi_core_enable(ADI_CORE_SHARC1);
-
-    /* Wait for SHARC cores to become ready */
-    while (!context->sharc0Ready || !context->sharc1Ready) {
-        delay(1);
-    }
-
-    /* Initialize the audio routing table */
-    audio_routing_init(context);
-
-    /* Tell SHARC0 where to find the routing table.  Add a reference to
-     * so it doesn't get destroyed upon receipt.
-     */
-    sae_refMsgBuffer(context->saeContext, context->routingMsgBuffer);
-    ipcToCore(context->saeContext, context->routingMsgBuffer, IPC_CORE_SHARC0);
+#ifdef USBC0_ENABLE
+    /* Start the UAC20 task */
+    xTaskCreate( uac2Task, "UAC2Task", UAC20_TASK_STACK_SIZE,
+        context, UAC20_TASK_PRIORITY, &context->uac2TaskHandle );
+#endif
 
     /* Get the idle task handle */
     context->idleTaskHandle = xTaskGetIdleTaskHandle();
 
-    /* Start A2B slave mode handling task */
-    a2b_slave_init(context);
-
     /* Start the housekeeping tasks */
     xTaskCreate( houseKeepingTask, "HouseKeepingTask", GENERIC_TASK_STACK_SIZE,
         context, HOUSEKEEPING_PRIORITY, &context->houseKeepingTaskHandle );
+    xTaskCreate( pushButtonTask, "PushbuttonTask", PUSHBUTTON_TASK_STACK_SIZE,
+        context, HOUSEKEEPING_PRIORITY, &context->pushButtonTaskHandle );
 
     /* Lower the startup task priority for the shell */
     vTaskPrioritySet( NULL, STARTUP_TASK_LOW_PRIORITY);
 
     /* Initialize the shell */
     shell_init(&context->shell, term_out, term_in, SHELL_MODE_BLOCKING, NULL);
+
+#ifdef USB_CDC_STDIO
+    /* Delay a little bit for USB enumeration to complete */
+    delay(1000);
+#endif
 
     /* Execute shell initialization command file */
     execShellCmdFile(&context->shell);
@@ -527,8 +621,20 @@ int main(int argc, char *argv[])
     APP_CONTEXT *context = &mainAppContext;
     UART_SIMPLE_RESULT uartResult;
 
+    /* Initialize the application context */
+    memset(context, 0, sizeof(*context));
+
+    /*
+     * Our time starts at the FAT epoch (1-Jan-1980) which is
+     * 10 years + 2 days after the UNIX epoch of 1-Jan-1970.
+     * The 1980 epoch keeps FatFS happy.  See get_fattime() in diskio.c.
+     *
+     * https://www.timeanddate.com/date/timeduration.html
+     */
+    context->now = (uint64_t)315532800 * (uint64_t)configTICK_RATE_HZ;
+
     /* Initialize system clocks */
-    system_clk_init();
+    system_clk_init(&context->cclk);
 
     /* Enable the CGU timestamp */
     cgu_ts_init();
@@ -536,8 +642,8 @@ int main(int argc, char *argv[])
     /* Initialize the GIC */
     gic_init();
 
-    /* Initialize the application context */
-    memset(context, 0, sizeof(*context));
+    /* Set GIC IRQ priorities */
+    gic_set_irq_prio();
 
     /* Initialize GPIO */
     gpio_init();
@@ -550,6 +656,9 @@ int main(int argc, char *argv[])
 
     /* Initialize the simple UART driver */
     uartResult = uart_init();
+
+    /* Initialize the simple CDC UART driver */
+    uartResult = uart_cdc_init();
 
     /* Open UART0 as the console device (115200,N,8,1) */
     uartResult = uart_open(UART0, &context->stdioHandle);

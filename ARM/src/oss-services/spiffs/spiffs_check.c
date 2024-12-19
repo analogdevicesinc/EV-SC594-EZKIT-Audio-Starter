@@ -19,11 +19,6 @@
  *      Author: petera
  */
 
-/*
- * Place code/data by default in external memory
- * This code has been modified by Analog Devices, Inc.
- */
-#include "external_memory.h"
 
 #include "spiffs.h"
 #include "spiffs_nucleus.h"

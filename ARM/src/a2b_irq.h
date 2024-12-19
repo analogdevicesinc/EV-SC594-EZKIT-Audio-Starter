@@ -17,6 +17,7 @@
 
 #include "context.h"
 
+/* A2B on J10 */
 #define A2B1_PINT_IRQ  (ADI_GPIO_PIN_INTERRUPT_2)
 #define A2B1_PINT_PIN  (ADI_GPIO_INT_PIN_5)
 

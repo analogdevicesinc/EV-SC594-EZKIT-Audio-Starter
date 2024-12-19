@@ -4,5 +4,8 @@ SHARC0
 SHARC1
 EV-SC594-EZKIT*.*xe
 EV-SC594-EZKIT*.ldr
+EV-SC594-EZKIT*.map
+.cflags*
+.lobjs*
 linker_log*
 *.log

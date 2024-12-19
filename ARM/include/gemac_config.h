@@ -13,7 +13,7 @@
 #ifndef _gemac_config_h_
 #define _gemac_config_h_
 
-/* These settings are for SOMCRR EZKIT 1.0 */
+/* These settings are for SOMCRR EZKIT */
 
 #define EMAC0_PHY_NUM_DEV      (1)
 #define EMAC0_PHY_DEV          (0)
@@ -56,5 +56,27 @@
 #define EMAC1_PHY0_DP83848_ACK_PHY_INT  *pREG_PINT6_REQ = BITM_PINT_REQ_PIQ2
 
 #define EMAC1_PHY0_DP83848_INT          INTR_PINT6_BLOCK
+
+/* Additional settings are for SOMCRR EZKIT Rev D */
+#define EMAC0_PHY0_ADIN1300_PORT_CFG                   \
+    *pREG_PINT5_ASSIGN  |= (BITM_PINT_ASSIGN_B1MAP) ;   \
+    *pREG_PINT5_MSK_SET  = BITM_PINT_MSK_SET_PIQ12 ;   \
+    *pREG_PINT5_EDGE_CLR = BITM_PINT_EDGE_SET_PIQ12;   \
+    /* *pREG_PINT5_INV_SET  = BITM_PINT_INV_SET_PIQ12 ; */  \
+                                                        \
+    *pREG_PORTG_FER_CLR  = BITM_PORT_FER_CLR_PX12 ;    \
+    *pREG_PORTG_DIR_CLR  = BITM_PORT_DIR_CLR_PX12 ;    \
+    *pREG_PORTG_INEN_SET = BITM_PORT_INEN_SET_PX12;    \
+    *pREG_PORTG_POL_SET  = BITM_PORT_POL_SET_PX12
+
+#define EMAC0_PHY0_ADIN1300_ACK_PHY_INT  EMAC0_PHY0_DP8386X_ACK_PHY_INT
+#define EMAC0_PHY0_ADIN1300_INT          EMAC0_PHY0_DP8386X_INT
+
+#define EMAC1_PHY0_ADIN1300_PORT_CFG     EMAC1_PHY0_DP83848_PORT_CFG
+#define EMAC1_PHY0_ADIN1300_ACK_PHY_INT  EMAC1_PHY0_DP83848_ACK_PHY_INT
+#define EMAC1_PHY0_ADIN1300_INT          EMAC1_PHY0_DP83848_INT
+
+#define __ADIN1300_EMAC0_PHY0__
+#define __ADIN1300_EMAC1_PHY0__
 
 #endif

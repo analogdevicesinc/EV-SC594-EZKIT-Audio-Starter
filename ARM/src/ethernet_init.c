@@ -22,12 +22,14 @@
 
 /* Simple service includes */
 #include "syslog.h"
+#include "telnet.h"
 
 /* LwIP includes */
 #include "lwip/inet.h"
 #include "lwip/tcpip.h"
 #include "lwip/dhcp.h"
 #include "netif/etharp.h"
+#include "lwip/apps/mdns.h"
 
 /* ADI Ethernet lwIP netif includes */
 #include "lwip_adi_ether_netif.h"
@@ -90,6 +92,9 @@ static void netif_status_callback(struct netif *netif)
         return;
     }
 
+    /* Tell mDNS */
+    mdns_resp_netif_settings_changed(netif);
+
     /* Log the settings */
     syslog_printf(
         "Ethernet %c%c%u:",
@@ -122,16 +127,28 @@ static void netif_link_status_callback(struct netif *netif)
 /***********************************************************************
  * MAC Address generation
  **********************************************************************/
+#include "flash.h"
+#include "crc16.h"
 void makeMACAddr(APP_CONTEXT *context, uint8_t *macAddr)
 {
-    static unsigned int seed = 0x4d9098df;
+    static unsigned int seed = 0;
     unsigned int s;
     int i;
 
-    /* Generate a repeatable random MAC address */
+    /* Generate a random seed from the flash UID */
+    if (seed == 0) {
+        seed = crc16_ccitt(
+            context->flashHandle->UID, sizeof(context->flashHandle->UID)
+        );
+    }
+
+    /*
+     * Generate a repeatable random MAC address.  It will also be used
+     * for mDNS IP address so limit each octet to 254
+     */
     s = seed; seed++;
     for (i = 0; i < 6; i++) {
-        macAddr[i] = rand_r(&s) & 0xFF;
+        macAddr[i] = (rand_r(&s) & 0xFF) % 254;
     }
 
     /* https://en.wikipedia.org/wiki/MAC_address */
@@ -150,30 +167,41 @@ void ethernet_init(APP_CONTEXT *context, ETH *eth, ETH_CFG *cfg)
 {
     ip_addr_t ip_addr, gw_addr, netmask;
     static bool first = true;
+    char mdns_ip_addr[32];
 
     /* Initialize lwIP and the TCP/IP subsystem */
     if (first) {
         tcpip_init(NULL, NULL);
-        first = false;
     }
 
+    /* Generate a unique MAC address and hostname */
+    makeMACAddr(context, eth->macaddr);
+
+    sprintf(eth->hostname,
+        "%s-%02X%02X%02X%02X%02X%02X", cfg->base_hostname,
+        eth->macaddr[0], eth->macaddr[1], eth->macaddr[2],
+        eth->macaddr[3], eth->macaddr[4], eth->macaddr[5]
+    );
+
     /* Set IP addresses */
-    net_aton((char *)cfg->ip_addr, &ip_addr);
-    net_aton((char *)cfg->gateway_addr, &gw_addr);
-    net_aton((char *)cfg->netmask, &netmask);
+    if (cfg->static_ip) {
+        net_aton((char *)cfg->ip_addr, &ip_addr);
+        net_aton((char *)cfg->gateway_addr, &gw_addr);
+        net_aton((char *)cfg->netmask, &netmask);
+    } else {
+        /* Set initial mDNS IP/GW/MASK address if not static */
+        sprintf(mdns_ip_addr,
+            "169.254.%d.%d", eth->macaddr[4], eth->macaddr[5]
+        );
+        net_aton(mdns_ip_addr, &ip_addr);
+        net_aton("0.0.0.0", &gw_addr);
+        net_aton("255.255.0.0", &netmask);
+    }
 
     /* Allocate a new ADI Ethernet network interface */
     eth->adi_ether = adi_ether_netif_new(context);
 
-    /* Generate a unique MAC address */
-    makeMACAddr(context, eth->macaddr);
-
-    /* Configure the user parameters (hostname, EMAC port, MAC address) */
-    sprintf(eth->hostname,
-        "%s-%02X%02X%02X%02X%02X%02X", "EZKIT",
-        eth->macaddr[0], eth->macaddr[1], eth->macaddr[2],
-        eth->macaddr[3], eth->macaddr[4], eth->macaddr[5]
-    );
+    /* Configure the user parameters (hostname, EMAC port) */
     eth->adi_ether->hostName = eth->hostname;
     eth->adi_ether->port = cfg->port;
     memcpy(eth->adi_ether->ethAddr.addr, eth->macaddr,
@@ -206,9 +234,20 @@ void ethernet_init(APP_CONTEXT *context, ETH *eth, ETH_CFG *cfg)
     /* Set interface to up */
     netif_set_up(&eth->netif);
 
+    /* Enable mDNS */
+    if (first) {
+        mdns_resp_init();
+    }
+    mdns_resp_add_netif(&eth->netif, eth->hostname, 60);
+
     /* Enable DHCP */
     if (cfg->static_ip == false) {
         dhcp_start(&eth->netif);
+    }
+
+    /* Start telnet server */
+    if (first) {
+        telnet_start(context);
     }
 
     /* Log init complete */
@@ -216,4 +255,6 @@ void ethernet_init(APP_CONTEXT *context, ETH *eth, ETH_CFG *cfg)
         "Ethernet %c%c%u init complete\n",
         eth->netif.name[0], eth->netif.name[1], eth->netif.num
     );
+
+    first = false;
 }

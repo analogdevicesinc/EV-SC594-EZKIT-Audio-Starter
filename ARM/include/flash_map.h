@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
  * This software is proprietary and confidential to Analog Devices, Inc.
  * and its licensors.
  *
@@ -19,17 +19,13 @@
 #define BOOT0_OFFSET  (FLASH_ADDR)
 #define BOOT0_SIZE    (0x00000000)
 
-/* Application (1M reserved) */
+/* Application (2M reserved) */
 #define APP_OFFSET    (BOOT0_OFFSET + BOOT0_SIZE)
-#define APP_SIZE      (0x00100000)
+#define APP_SIZE      (0x00200000)
 
-/* Filesystem (2M reserved) */
-#define FS_OFFSET     (APP_OFFSET + APP_SIZE)
-#define FS_SIZE       (0x00200000)
-
-/* SPIFFS Filesystem (8M reserved) */
-#define SPIFFS_OFFSET (FS_OFFSET + FS_SIZE)
-#define SPIFFS_SIZE   (0x00800000)
+/* SPIFFS Filesystem (14M reserved) */
+#define SPIFFS_OFFSET (APP_OFFSET + APP_SIZE)
+#define SPIFFS_SIZE   (0x00E00000)
 
 /* Erase block size */
 #define ERASE_BLOCK_SIZE (4*1024)

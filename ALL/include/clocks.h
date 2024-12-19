@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2022 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2024 - Analog Devices Inc. All Rights Reserved.
  * This software is proprietary and confidential to Analog Devices, Inc.
  * and its licensors.
  *
@@ -17,12 +17,14 @@
 #define CCLK         (1000000000)
 #define SYSCLK       (CCLK / 2)
 #define SCLK0        (CCLK / 8)
+#define OCLK         (CCLK / 4)
 
 /* Insure CGU_TS_CLK = SYSCLK / (2^CGU_TS_DIV) below */
 #define CGU_TS_DIV   (5)
-#define CGU_TS_CLK   (SYSCLK / 32)
+#define CGU_TS_CLK   (SYSCLK / (1<<CGU_TS_DIV))
 
-/* Need to override and round up the TWI prescale for the TWI simple
+/*
+ * Need to override and round up the TWI prescale for the TWI simple
  * driver since SCLK0 is not evenly divisible to create the 10MHz time
  * reference.
  */

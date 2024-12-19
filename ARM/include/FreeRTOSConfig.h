@@ -28,12 +28,14 @@
 #ifndef FREERTOS_CONFIG_H
 #define FREERTOS_CONFIG_H
 
+#include "clocks.h"
+
 #if defined(__ADSPSC589_FAMILY__)
 #include <defSC589.h>
-#define configCORE_CLOCK_HZ 500000000
 #elif defined(__ADSPSC594_FAMILY__)
 #include <defSC594.h>
-#define configCORE_CLOCK_HZ 1000000000
+#elif defined(__ADSPSC598_FAMILY__)
+#include <defSC598.h>
 #else
 #error Unsupported processor!
 #endif
@@ -81,14 +83,11 @@ be located in the (faster) on-chip RAM.  When this parameter is set to 1 the
 application must define an array using the name and size as follows below, but
 is free to locate the array in any suitable RAM region (the faster the better as
 the stacks used by the tasks are allocated from this array):
-
-uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
-
 */
 #define configAPPLICATION_ALLOCATED_HEAP        0
 #define configSUPPORT_STATIC_ALLOCATION         0
-#define configCPU_CLOCK_HZ                      configCORE_CLOCK_HZ
-#define configSCLK0_HZ                          125000000
+#define configCPU_CLOCK_HZ                      CCLK
+#define configSCLK0_HZ                          SCLK0
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION 1
 #define configUSE_TICKLESS_IDLE                 0
 #define configTICK_RATE_HZ                      ( ( TickType_t ) 1000 )
@@ -97,7 +96,7 @@ uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
 #define configUSE_TICK_HOOK                     0
 #define configMAX_PRIORITIES                    ( 7 )
 #define configMINIMAL_STACK_SIZE                ( ( unsigned short ) 512 )
-#define configTOTAL_HEAP_SIZE                   ( 256 * 1024 )
+#define configTOTAL_HEAP_SIZE                   ( 512 * 1024 )
 #define configMAX_TASK_NAME_LEN                 ( 32 )
 #define configUSE_TRACE_FACILITY                0
 #define configUSE_16_BIT_TICKS                  0
@@ -117,12 +116,12 @@ uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
  * The minimal OSAL expects its TLS pointers to start at
  * zero.
  */
-#define configNUM_APP_TLS_POINTERS \
-    (configNUM_THREAD_LOCAL_STORAGE_POINTERS / 2)
-#define configSTART_APP_TLS_POINTERS \
-    (configNUM_THREAD_LOCAL_STORAGE_POINTERS / 2)
 #define configNUM_OSAL_TLS_POINTERS \
     (configNUM_THREAD_LOCAL_STORAGE_POINTERS / 2)
+#define configNUM_APP_TLS_POINTERS \
+    (configNUM_THREAD_LOCAL_STORAGE_POINTERS - configNUM_OSAL_TLS_POINTERS)
+#define configSTART_APP_TLS_POINTERS \
+    (configNUM_OSAL_TLS_POINTERS)
 
 /* Pre-defined application TLS pointers */
 #define configSTDIO_APP_TLS_POINTER (configSTART_APP_TLS_POINTERS + 0)

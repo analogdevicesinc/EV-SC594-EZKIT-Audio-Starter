@@ -16,7 +16,6 @@
 #include <stdbool.h>
 
 typedef enum _FS_DEVMAN_RESULT {
-    FS_DEVMAN_DEVICE_OUT_OF_BOUNDS = -5,
     FS_DEVMAN_ERROR = -4,
     FS_DEVMAN_NOT_FOUND = -3,
     FS_DEVMAN_NO_ENTRIES = -2,

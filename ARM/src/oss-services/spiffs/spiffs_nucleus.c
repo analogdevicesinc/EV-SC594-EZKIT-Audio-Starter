@@ -1,12 +1,6 @@
 #include "spiffs.h"
 #include "spiffs_nucleus.h"
 
-/*
- * Place code/data by default in external memory
- * This code has been modified by Analog Devices, Inc.
- */
-#include "external_memory.h"
-
 static s32_t spiffs_page_data_check(spiffs *fs, spiffs_fd *fd, spiffs_page_ix pix, spiffs_span_ix spix) {
   s32_t res = SPIFFS_OK;
   if (pix == (spiffs_page_ix)-1) {

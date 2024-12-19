@@ -5,6 +5,9 @@
 This project contains a comprehensive BSP for the EV-SC594-EZKIT SoM plus
 carrier board ez-kit.
 
+For full details about this project, 
+features and set up instructions, please refer to: https://wiki.analog.com/resources/tools-software/sharc-audio-module/advanced-audio-projects
+
 ## To build
 
 ### Install the tools
@@ -44,18 +47,19 @@ make      # Add -j4 for a faster build on multi-core machines
 
 - Open CCES, create a new debug configuration
 - Load `build/ezkitSC594W_preload_core0` into core0
-- Also load the `SHARC1-EV-SC594-EZKIT.exe` executable into core0
+- Also load the `EV-SC594-EZKIT-ARM.exe` executable into core0
 - Load `EV-SC594-EZKIT-SHARC0.dxe` into core1
 - Load `EV-SC594-EZKIT-SHARC1.dxe` into core2
+- In the `Automatic Breakpoints` tab, uncheck `Enable Semihosting`
 - Save and start debugging.
 
 ## Initial flashing of the code using the ADI's cldp utility
 
-- Go into the 'build' directory.
-- Edit setenv.bat as necessary to point to your CCES install and run it.
+- Edit env.sh as necessary to point to your CCES install and run it.
   If cldp is already in your path you can omit this step.
-- Set the blue rotary switch on the ez-kit to position zero and reset the
+- Go into the 'build' directory.
+- Set the blue rotary switch on the ez-kit to position 0 and reset the
   board
-- Program the board using cldp
-- Set the blue rotary switch back to one and reset the board
+- Program the board using cldp (see/edit flash.bat)
+- Set the blue rotary switch back to position 1 and reset the board
 

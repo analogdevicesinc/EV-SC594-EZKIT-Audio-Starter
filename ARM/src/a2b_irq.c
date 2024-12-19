@@ -82,7 +82,7 @@ static TWI_SIMPLE_RESULT a2b_irq_twi_xfer(
 
     if (b == A2B_BUS_NUM_1) {
         a2bTwiHandle = context->a2bTwiHandle;
-        a2bI2CAddr = A2B_I2C_ADDR;
+        a2bI2CAddr = context->cfg.a2bI2CAddr;
     } else {
         return(TWI_SIMPLE_ERROR);
     }
@@ -252,6 +252,9 @@ void a2b_irq_enable(APP_CONTEXT *context, A2B_BUS_NUM b)
 
 void a2b_irq_init(APP_CONTEXT *context)
 {
+    /* Create A2B IRQ processing mutex */
+    a2bIrqMutex = xSemaphoreCreateMutex();
+
     /* Don't start of no A2B */
     if (!context->a2bPresent) {
         return;
@@ -259,9 +262,6 @@ void a2b_irq_init(APP_CONTEXT *context)
 
     /* Create a IRQ processing queue */
     a2bIrqQueue = xQueueCreate(16, sizeof(A2B_BUS_NUM));
-
-    /* Create A2B IRQ processing mutex */
-    a2bIrqMutex = xSemaphoreCreateMutex();
 
     /* Create IRQ processing task */
     xTaskCreate(a2bIrqTask, "A2BIrqTask", GENERIC_TASK_STACK_SIZE,

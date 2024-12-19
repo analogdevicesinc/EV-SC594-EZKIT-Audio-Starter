@@ -9,11 +9,6 @@
  * software may not be used except as expressly authorized under the license.
  */
 
-/*
- * Place code/data by default in external memory
- */
-#include "external_memory.h"
-
 #include <stdint.h>
 
 #include "adau1962.h"
@@ -56,12 +51,10 @@ typedef struct {
 
 REG_CONFIG adau1962Config[] = {
     { ADAU1962_PAD_STRGTH, 0x22 }, // 8mA pad drive strength
-//    { ADAU1962_DAC_CTRL0,  0x19 }, // 48KHz, TDM8, 1-Bit Delay, Muted
     { ADAU1962_DAC_CTRL0,  0x21 }, // 48KHz, TDM16, 1-Bit Delay, Muted
-//    { ADAU1962_DAC_CTRL1,  0x00 }, // I2S framing, Clock Slave
-    { ADAU1962_DAC_CTRL1,  0x01 }, // I2S framing, Clock Master
+    { ADAU1962_DAC_CTRL1,  0x43 }, // Clock Master, Latch Falling Edge,
+                                   // Pulse Mode, 32-bit
     { ADAU1962_DAC_CTRL2,  0x00 }, // 256x OSR, Automute Disable
-//    { ADAU1962_DAC_CTRL0,  0x18 }, // 48KHz, TDM8, 1-Bit delay, Unmuted
     { ADAU1962_DAC_CTRL0,  0x20 }, // 48KHz, TDM16, 1-Bit delay, Unmuted
 };
 

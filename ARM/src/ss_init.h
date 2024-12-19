@@ -19,6 +19,7 @@ typedef bool (*SS_SET)(APP_CONTEXT *context, int pinId, bool value);
 
 enum SS_PIN_ID {
     SS_PIN_ID_UNKNOWN = -1,
+    /* Carrier */
     SS_PIN_ID_nADAU1979_EN,
     SS_PIN_ID_nADAU_1962_EN,
     SS_PIN_ID_nADAU_RESET,

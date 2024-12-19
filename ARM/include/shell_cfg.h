@@ -17,17 +17,18 @@
 /*! @cond */
 
 #define SHELL_MAX_ARGS          10
-#define SHELL_WELCOMEMSG         "EV-SC594-EZKIT Audio Starter\n" \
-                                 "Version: %s (%s %s)\n"
+#define SHELL_WELCOMEMSG        "EV-SC594-EZKIT Audio Starter with Networking\n" \
+                                "Version: %s (%s %s)\n"
 #define SHELL_PROMPT            "# "
 #define SHELL_ERRMSG            "Invalid command, type 'help' for help\n"
 #define SHELL_MAX_LINE_LEN      79
 #define SHELL_COLUMNS           80
-#define SHELL_LINES             25
+#define SHELL_LINES             24
 #define SHELL_MAX_HISTORIES     50
 #define SHELL_MALLOC            umm_malloc
 #define SHELL_FREE              umm_free
 #define SHELL_CALLOC            umm_calloc
+#define SHELL_REALLOC           umm_realloc
 #define SHELL_STRDUP            shell_strdup
 #define SHELL_STRNDUP           shell_strndup
 

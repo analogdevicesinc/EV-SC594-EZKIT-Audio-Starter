@@ -9,11 +9,6 @@
  * software may not be used except as expressly authorized under the license.
  */
 
-/*
- * Place code/data by default in external memory
- */
-#include "external_memory.h"
-
 #include <stdint.h>
 
 #include "adau1979.h"
@@ -44,9 +39,9 @@ typedef struct {
 } REG_CONFIG;
 
 REG_CONFIG adau1979Config[] = {
+    { ADAU1979_REG_BLOCK_POWER_SAI, 0x7F }, // LRCLK High, data change rising,
     { ADAU1979_REG_SAI_CTRL0,       0x1A }, // 48KHz, TDM8, 1-Bit Delay
-//    { ADAU1979_REG_SAI_CTRL0,       0x22 }, // 48KHz, TDM16, 1-Bit Delay
-    { ADAU1979_REG_SAI_CTRL1,       0x00 }, // I2S framing, Slave
+    { ADAU1979_REG_SAI_CTRL1,       0x08 }, // LRCLK Pulse, Slave
     { ADAU1979_REG_DC_HPF_CAL,      0x0F }, // Enable HPF CH1-4
     { ADAU1979_REG_POST_ADC_GAIN1,  0x8C }, // +7.5dB gain
     { ADAU1979_REG_POST_ADC_GAIN2,  0x8C }, // +7.5dB gain
@@ -99,7 +94,7 @@ ADAU1979_RESULT init_adau1979(sTWI *twi, uint8_t adau_address)
     uint8_t configLen;
     uint8_t i;
     uint8_t buf[2];
-    
+
     /* Perform a software reset to ensure all internal registers are reset to their POR */
     buf[0] = ADAU1979_REG_POWER;
     buf[1] = 0x80;

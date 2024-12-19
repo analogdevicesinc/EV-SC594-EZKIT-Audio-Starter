@@ -9,11 +9,6 @@
  * software may not be used except as expressly authorized under the license.
  */
 
-/*
- * Place code/data by default in external memory
- */
-#include "external_memory.h"
-
 #include "context.h"
 #include "twi_simple.h"
 #include "ss_init.h"

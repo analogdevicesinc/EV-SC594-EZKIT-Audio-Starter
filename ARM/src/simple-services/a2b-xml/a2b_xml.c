@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2024 - Analog Devices Inc. All Rights Reserved.
  * This software is proprietary and confidential to Analog Devices, Inc.
  * and its licensors.
  *
@@ -9,16 +9,12 @@
  * software may not be used except as expressly authorized under the license.
  */
 
-/*
- * Place code/data by default in external memory
- */
-#include "external_memory.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 #include <inttypes.h>
+#include <ctype.h>
 
 #include "yxml.h"
 #include "a2b_xml_cfg.h"
@@ -174,7 +170,7 @@ static unsigned char *strtoarray(const char *data, unsigned short len)
     while ((*data) && (idx < len)) {
         array[idx] = (hex2nibble(*data) << 4) | hex2nibble(*(data+1));
         idx++; data += 2;
-        if (*data == ' ') {
+        while (isspace((int)(*data))) {
             data++;
         }
     }

@@ -22,11 +22,7 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-/*
- * Place code/data by default in external memory
- * This code has been modified by Analog Devices, Inc.
- */
-#include "external_memory.h"
+/* This file has been modified by Analog Devices, Inc. */
 
 #if defined(_ADI_COMPILER)
 /* Suppress cc0111: {D} warning: statement is unreachable */

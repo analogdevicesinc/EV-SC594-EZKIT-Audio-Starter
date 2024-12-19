@@ -117,7 +117,8 @@ const adi_mmu_AbstractPageEntry _adi_mmu_absPageTable[] =
 
     /* Dynamic Memory Controller 0 (DMC0) 1GB SDRAM */
     { 0x80000000u, 0x9FFFFFFFu, SHARC_L3                    }, /* 512MB DDR-A */
-    { 0xA0000000u, 0xBFFFFFFFu, ADI_MMU_WB_CACHED           }, /* 512MB DDR-A */
+    { 0xA0000000u, 0xAFFFFFFFu, ADI_MMU_WB_CACHED           }, /* 256MB DDR-A */
+    { 0xB0000000u, 0xBFFFFFFFu, ADI_MMU_RW_UNCACHED         }, /* 256MB DDR-A */
 
 };
 

@@ -33,7 +33,7 @@
  */
 
 /*
- * This file has been modified by Analog Devices, Inc to remove the
+ * This file has been modified by Analog Devices, Inc. to remove the
  * dependency on <termios.h> and better integrate into an embedded
  * environment in a modular way.  Improved syntax coloring for Lua
  * and tolerance of DOS line endings were also added.
@@ -70,6 +70,22 @@
 
 #ifndef KILO_TERM_READ
 #error You must define KILO_TERM_READ
+#endif
+
+#ifndef KILO_TIME
+#define KILO_TIME    time
+#endif
+
+#ifndef KILO_MALLOC
+#define KILO_MALLOC  malloc
+#endif
+
+#ifndef KILO_FREE
+#define KILO_FREE    free
+#endif
+
+#ifndef KILO_REALLOC
+#define KILO_REALLOC realloc
 #endif
 
 /* Syntax highlight types */
@@ -811,9 +827,6 @@ int editorOpen(char *filename) {
 
     fp = fopen(filename,"r");
     if (!fp) {
-        if (errno != ENOENT) {
-            return -1;
-        }
         return 1;
     }
 
@@ -839,7 +852,7 @@ int editorOpen(char *filename) {
 int editorSave(void) {
     int len;
     char *buf = editorRowsToString(&len);
-    int fd = open(E.filename,O_RDWR|O_CREAT,0644);
+    int fd = open(E.filename,O_WRONLY|O_TRUNC|O_CREAT,0644);
     if (fd == -1) goto writeerr;
 
     /* Use truncate + a single write(2) call in order to make saving
@@ -1005,7 +1018,7 @@ void editorRefreshScreen(void) {
     /* Second row depends on E.statusmsg and the status message update time. */
     abAppend(&ab,"\x1b[0K",4);
     int msglen = strlen(E.statusmsg);
-    if (msglen && time(NULL)-E.statusmsg_time < 5)
+    if (msglen && KILO_TIME(NULL)-E.statusmsg_time < 5)
         abAppend(&ab,E.statusmsg,msglen <= E.screencols ? msglen : E.screencols);
 
     /* Put cursor at its current position. Note that the horizontal position
@@ -1035,7 +1048,7 @@ void editorSetStatusMessage(const char *fmt, ...) {
     va_start(ap,fmt);
     vsnprintf(E.statusmsg,sizeof(E.statusmsg),fmt,ap);
     va_end(ap);
-    E.statusmsg_time = time(NULL);
+    E.statusmsg_time = KILO_TIME(NULL);
 }
 
 /* =============================== Find mode ================================ */
