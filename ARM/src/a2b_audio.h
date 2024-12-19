@@ -17,4 +17,7 @@
 void a2bAudioOut(void *buffer, uint32_t size, void *usrPtr);
 void a2bAudioIn(void *buffer, uint32_t size, void *usrPtr);
 
+void a2b2AudioOut(void *buffer, uint32_t size, void *usrPtr);
+void a2b2AudioIn(void *buffer, uint32_t size, void *usrPtr);
+
 #endif

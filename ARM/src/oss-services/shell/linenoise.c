@@ -72,10 +72,8 @@
  */
 
 /*
- * Place code/data by default in external memory
  * This code has been modified by Analog Devices, Inc.
  */
-#include "external_memory.h"
 
 #include <stdlib.h>
 #include <stdio.h>

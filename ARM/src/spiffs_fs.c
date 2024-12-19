@@ -9,11 +9,6 @@
  * software may not be used except as expressly authorized under the license.
  */
 
-/*
- * Place code/data by default in external memory
- */
-#include "external_memory.h"
-
 #include <stdio.h>
 
 #ifdef FREE_RTOS
@@ -152,6 +147,8 @@ void spiffs_unmount(spiffs *fs, FLASH_INFO **fi)
     if (SPIFFS_mounted(fs)) {
         SPIFFS_unmount(fs);
     }
+
+    memset(fs, 0, sizeof(*fs));
 
 #ifdef FREE_RTOS
     if (FS->lock) {

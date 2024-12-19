@@ -31,8 +31,10 @@ typedef uint16_t u16_t;
 typedef int8_t s8_t;
 typedef uint8_t u8_t;
 
+#if !defined(__ADSPCORTEXA55__)
 #define _SPIPRIbl  "%08lx"
 #define _SPIPRIi   "%ld"
+#endif
 
 struct spiffs_t;
 extern void spiffs_lock(struct spiffs_t *fs);

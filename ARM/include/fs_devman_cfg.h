@@ -18,7 +18,6 @@
 
 #define FS_DEVMAN_MAX_DEVICES 5
 
-#define FS_DEVMAN_ENABLE_ROMFS
 #define FS_DEVMAN_ENABLE_SPIFFS
 
 #endif

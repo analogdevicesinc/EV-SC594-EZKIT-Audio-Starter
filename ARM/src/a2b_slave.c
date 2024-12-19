@@ -25,9 +25,6 @@
 #include "syslog.h"
 #include "init.h"
 
-/* Place code/data by default in external memory */
-#include "external_memory.h"
-
 #define AD242X_I2SGCFG          0x41u
 #define AD242X_NODE             0x29u
 #define AD242X_NODE_DISCVD      0x20u
@@ -47,7 +44,7 @@ portTASK_FUNCTION(a2bSlaveTask, pvParameters)
     while (1) {
         if (context->a2bmode == A2B_BUS_MODE_SUB) {
             A2B_REG = AD242X_NODE;
-            result = twi_writeRead(context->a2bTwiHandle, A2B_I2C_ADDR,
+            result = twi_writeRead(context->a2bTwiHandle, context->cfg.a2bI2CAddr,
                 &A2B_REG, sizeof(A2B_REG),
                 &A2B_NODE_REG, sizeof(A2B_NODE_REG)
             );
@@ -57,7 +54,7 @@ portTASK_FUNCTION(a2bSlaveTask, pvParameters)
             if (A2B_NODE_REG & AD242X_NODE_DISCVD) {
                 if (!context->a2bSlaveActive) {
                     A2B_REG = AD242X_I2SGCFG;
-                    result = twi_writeRead(context->a2bTwiHandle, A2B_I2C_ADDR,
+                    result = twi_writeRead(context->a2bTwiHandle, context->cfg.a2bI2CAddr,
                         &A2B_REG, sizeof(A2B_REG),
                         rbuf, sizeof(rbuf)
                     );

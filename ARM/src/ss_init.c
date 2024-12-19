@@ -9,11 +9,6 @@
  * software may not be used except as expressly authorized under the license.
  */
 
-/*
- * Place code/data by default in external memory
- */
-#include "external_memory.h"
-
 #include "ss_init.h"
 
 /* Init prototypes */
@@ -41,6 +36,7 @@ typedef struct _SS_PIN {
 } SS_PIN;
 
 static SS_PIN SS_PINS[] = {
+    /* Carrier */
     { .pinId = SS_PIN_ID_nADAU1979_EN, .get = CRR_GET, .set = CRR_SET},
     { .pinId = SS_PIN_ID_nADAU_1962_EN, .get = CRR_GET, .set = CRR_SET},
     { .pinId = SS_PIN_ID_nADAU_RESET, .get = CRR_GET, .set = CRR_SET},
@@ -57,7 +53,7 @@ static SS_PIN SS_PINS[] = {
     { .pinId = SS_PIN_ID_nSPDIF_OPTICAL_EN, .get = CRR_GET, .set = CRR_SET},
     { .pinId = SS_PIN_ID_nSPDIF_DIGITAL_EN, .get = CRR_GET, .set = CRR_SET},
     { .pinId = SS_PIN_ID_OCTAL_SPI_CS_EN, .get = CRR_GET, .set = CRR_SET},
-    { .pinId = SS_PIN_ID_nOSPIFLASH_CS_EN, .get = SOM_GET, .set = SOM_SET},
+    /* SOM */
     { .pinId = SS_PIN_ID_nUART0_FLOW_EN, .get = SOM_GET, .set = SOM_SET},
     { .pinId = SS_PIN_ID_nUART0_EN, .get = SOM_GET, .set = SOM_SET},
     { .pinId = SS_PIN_ID_nSPID2_D3_EN, .get = SOM_GET, .set = SOM_SET},

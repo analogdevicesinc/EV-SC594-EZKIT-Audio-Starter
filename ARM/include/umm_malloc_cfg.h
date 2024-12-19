@@ -15,9 +15,6 @@
         xSemaphoreGiveRecursive(umm_heap_locks[x])
 #endif
 
-/* Place code/data by default in external memory */
-#include "external_memory.h"
-
 #include "umm_malloc_heaps.h"
 
 #define UMM_INFO

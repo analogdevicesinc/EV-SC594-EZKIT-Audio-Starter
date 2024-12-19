@@ -47,6 +47,16 @@
 
 #include "getline_cfg.h"
 
+#ifndef GETLINE_MALLOC
+#define GETLINE_MALLOC  malloc
+#endif
+#ifndef GETLINE_FREE
+#define GETLINE_FREE    free
+#endif
+#ifndef GETLINE_REALLOC
+#define GETLINE_REALLOC realloc
+#endif
+
 ssize_t
 getdelim(char **buf, size_t *bufsiz, int delimiter, FILE *fp)
 {

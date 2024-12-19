@@ -102,16 +102,16 @@ static ADI_ETHER_RESULT insert_queue(ADI_EMAC_FRAME_Q *pQueue,
 static ADI_ETHER_RESULT bind_buf_with_desc(ADI_ETHER_HANDLE hDevice,ADI_EMAC_CHANNEL *pChannel, int32_t nDMADeviceNum);
 
 static ADI_ETHER_RESULT init_descriptor_memory(
-											   ADI_ETHER_HANDLE phDevice,
-											   const uint8_t *pMemory,
-											   const uint32_t Length,
-											   ADI_EMAC_CHANNEL *pChannel
-											   );
+                                               ADI_ETHER_HANDLE phDevice,
+                                               const uint8_t *pMemory,
+                                               const uint32_t Length,
+                                               ADI_EMAC_CHANNEL *pChannel
+                                               );
 
 static ADI_ETHER_RESULT init_descriptor (
-										 ADI_ETHER_HANDLE phDevice,
-										 ADI_EMAC_CHANNEL *pChannel
-										 );
+                                         ADI_ETHER_HANDLE phDevice,
+                                         ADI_EMAC_CHANNEL *pChannel
+                                         );
 
 static uint32_t gemac_init(ADI_ETHER_HANDLE * const phDevice);
 
@@ -196,10 +196,10 @@ void gemac_set_mdcclk(ADI_ETHER_HANDLE phDevice,
 /* set dma operation mode */
 ALWAYS_INLINE
 void gemac_set_dmaopmode(
-						 ADI_ETHER_HANDLE phDevice,
-						 const uint32_t nDMAChannel,
-						 const uint32_t opMode
-						 )
+                         ADI_ETHER_HANDLE phDevice,
+                         const uint32_t nDMAChannel,
+                         const uint32_t opMode
+                         )
 {
     ADI_EMAC_REGISTERS* const  pEmacRegs = get_gemac_regptr(phDevice);
 #ifdef ADI_DEBUG
@@ -295,8 +295,8 @@ void* gemac_get_cur_txdesc_addr(ADI_ETHER_HANDLE phDevice, const uint32_t nDMACh
 ALWAYS_INLINE
 bool gemac_rx_desc_valid(const uint32_t status)
 {
-    return ((status & ENUM_DS_DESC_ERR) == 0) 						 &&
-    	   ((status & ENUM_DS_RXFIRST_DESC) == ENUM_DS_RXFIRST_DESC) &&
+    return ((status & ENUM_DS_DESC_ERR) == 0)                        &&
+           ((status & ENUM_DS_RXFIRST_DESC) == ENUM_DS_RXFIRST_DESC) &&
            ((status & ENUM_DS_RXLAST_DESC) == ENUM_DS_RXLAST_DESC) ;
 }
 
@@ -349,14 +349,14 @@ void reset_queue(ADI_EMAC_FRAME_Q *pQueue)
 /* reset DMA Channel */
 ALWAYS_INLINE
 void reset_dma_channel(ADI_EMAC_DMA_CHANNEL* const pDmaChannel) {
-	reset_queue(&pDmaChannel->Active);
-	reset_queue(&pDmaChannel->Pending);
-	reset_queue(&pDmaChannel->Queued);
-	reset_queue(&pDmaChannel->Completed);
+    reset_queue(&pDmaChannel->Active);
+    reset_queue(&pDmaChannel->Pending);
+    reset_queue(&pDmaChannel->Queued);
+    reset_queue(&pDmaChannel->Completed);
 
-	pDmaChannel->pDmaDescHead = NULL;
-	pDmaChannel->pDmaDescTail = NULL;
-	pDmaChannel->NumAvailDmaDesc = 0u;
+    pDmaChannel->pDmaDescHead = NULL;
+    pDmaChannel->pDmaDescTail = NULL;
+    pDmaChannel->NumAvailDmaDesc = 0u;
 }
 
 
@@ -365,25 +365,25 @@ void reset_dma_channel(ADI_EMAC_DMA_CHANNEL* const pDmaChannel) {
 ALWAYS_INLINE
 void reset_all_queues(ADI_EMAC_DEVICE * const pDev)
 {
-	pDev->Rx.Recv    = true;
+    pDev->Rx.Recv    = true;
 
     /* rest all queue structures for DMA0 */
-	reset_dma_channel(&pDev->Rx.DMAChan[0]);
-	reset_dma_channel(&pDev->Tx.DMAChan[0]);
+    reset_dma_channel(&pDev->Rx.DMAChan[0]);
+    reset_dma_channel(&pDev->Tx.DMAChan[0]);
 
-	/* If DMA1 is supported */
-	if (pDev->Capability & ADI_EMAC_CAPABILITY_AV_DMA1) {
-	    /* rest all queue structures for DMA1 */
-		reset_dma_channel(&pDev->Rx.DMAChan[1]);
-		reset_dma_channel(&pDev->Tx.DMAChan[1]);
-	}
+    /* If DMA1 is supported */
+    if (pDev->Capability & ADI_EMAC_CAPABILITY_AV_DMA1) {
+        /* rest all queue structures for DMA1 */
+        reset_dma_channel(&pDev->Rx.DMAChan[1]);
+        reset_dma_channel(&pDev->Tx.DMAChan[1]);
+    }
 
-	/* If DMA2 is supported */
-	if (pDev->Capability & ADI_EMAC_CAPABILITY_AV_DMA2) {
-	    /* rest all queue structures for DMA2 */
-		reset_dma_channel(&pDev->Rx.DMAChan[2]);
-		reset_dma_channel(&pDev->Tx.DMAChan[2]);
-	}
+    /* If DMA2 is supported */
+    if (pDev->Capability & ADI_EMAC_CAPABILITY_AV_DMA2) {
+        /* rest all queue structures for DMA2 */
+        reset_dma_channel(&pDev->Rx.DMAChan[2]);
+        reset_dma_channel(&pDev->Tx.DMAChan[2]);
+    }
 }
 
 
@@ -447,10 +447,10 @@ void resume_tx(ADI_ETHER_HANDLE phDevice, const uint32_t nDMAChannel)
     TxDmaStatus = *pDMARegister_STAT[nDMAChannel] & BITM_EMAC_DMA_STAT_TS;
 
     if (TxDmaStatus == ENUM_EMAC_DMA_STAT_TS_SUSPENDED) {
-    	*pDMARegister_TXPOLL[nDMAChannel] = 0x1;
+        *pDMARegister_TXPOLL[nDMAChannel] = 0x1;
     }
     else if (TxDmaStatus == ENUM_EMAC_DMA_STAT_TS_STOPPED) {
-    	*pDMARegister_OPMODE[nDMAChannel] |= BITM_EMAC_DMA_OPMODE_ST;
+        *pDMARegister_OPMODE[nDMAChannel] |= BITM_EMAC_DMA_OPMODE_ST;
     }
 }
 
@@ -504,7 +504,7 @@ void gemac_stop_tx(ADI_ETHER_HANDLE phDevice, const uint32_t nDMAChannel)
 ALWAYS_INLINE
 void resume_rx(ADI_ETHER_HANDLE phDevice, const uint32_t nDMAChannel)
 {
-	ADI_EMAC_REGISTERS* const  pEmacRegs = get_gemac_regptr(phDevice);
+    ADI_EMAC_REGISTERS* const  pEmacRegs = get_gemac_regptr(phDevice);
 #ifdef ADI_DEBUG
     ADI_EMAC_DEVICE *pDev = (ADI_EMAC_DEVICE*)phDevice;
 #endif
@@ -543,10 +543,10 @@ void resume_rx(ADI_ETHER_HANDLE phDevice, const uint32_t nDMAChannel)
     RxDmaStatus = *pDMARegister_STAT[nDMAChannel] & BITM_EMAC_DMA_STAT_RS;
 
     if( RxDmaStatus == ENUM_EMAC_DMA_STAT_RS_SUSPENDED) {
-    	*pDMARegister_RXPOLL[nDMAChannel] = 0x1;
+        *pDMARegister_RXPOLL[nDMAChannel] = 0x1;
     }
     else if (RxDmaStatus == ENUM_EMAC_DMA_STAT_RS_STOPPED) {
-    	*pDMARegister_OPMODE[nDMAChannel] |= BITM_EMAC_DMA_OPMODE_SR; // stopped
+        *pDMARegister_OPMODE[nDMAChannel] |= BITM_EMAC_DMA_OPMODE_SR; // stopped
     }
 }
 
@@ -668,26 +668,26 @@ void unmask_gemac_ints(ADI_ETHER_HANDLE phDevice, const uint32_t nDMAChannel)
 
 static ADI_ETHER_RESULT bind_desc_and_activate (ADI_ETHER_HANDLE hDevice,ADI_EMAC_CHANNEL *pChannel, int32_t nDMADeviceNum)
 {
-	ADI_ETHER_RESULT eResult = ADI_ETHER_RESULT_SUCCESS;
+    ADI_ETHER_RESULT eResult = ADI_ETHER_RESULT_SUCCESS;
 #ifdef ADI_ETHER_SUPPORT_AV
-	ADI_EMAC_DEVICE*  const  pDev = (ADI_EMAC_DEVICE*)hDevice;
+    ADI_EMAC_DEVICE*  const  pDev = (ADI_EMAC_DEVICE*)hDevice;
 #endif
 
-	if (
-		   (nDMADeviceNum == 0)
+    if (
+           (nDMADeviceNum == 0)
 #ifdef ADI_ETHER_SUPPORT_AV
         || (   (pDev->Capability & ADI_EMAC_CAPABILITY_AV)
             && (
-		           ((nDMADeviceNum == 1) && (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_RX_EN) && (pChannel->Recv))
-		        || ((nDMADeviceNum == 1) && (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_TX_EN) && (!pChannel->Recv))
-		        || ((nDMADeviceNum == 2) && (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_RX_EN) && (pChannel->Recv))
-		        || ((nDMADeviceNum == 2) && (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_TX_EN) && (!pChannel->Recv))
+                   ((nDMADeviceNum == 1) && (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_RX_EN) && (pChannel->Recv))
+                || ((nDMADeviceNum == 1) && (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_TX_EN) && (!pChannel->Recv))
+                || ((nDMADeviceNum == 2) && (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_RX_EN) && (pChannel->Recv))
+                || ((nDMADeviceNum == 2) && (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_TX_EN) && (!pChannel->Recv))
             ))
 #endif
-		)
-	{
-		bind_buf_with_desc (hDevice, pChannel, nDMADeviceNum);
-		activate_channel (hDevice, pChannel, nDMADeviceNum);
+        )
+    {
+        bind_buf_with_desc (hDevice, pChannel, nDMADeviceNum);
+        activate_channel (hDevice, pChannel, nDMADeviceNum);
     }
 
     return eResult;
@@ -745,20 +745,20 @@ static void gemac_autonego_config(ADI_ETHER_HANDLE hDevice, uint32_t nAutoNegoSt
                     );
     /* set the duplex mode */
     if (nAutoNegoStatus & ADI_PHY_AN_FULL_DUPLEX) {
-    	phyRegData |= BITM_EMAC_MACCFG_DM;
+        phyRegData |= BITM_EMAC_MACCFG_DM;
     } else {
-    	phyRegData &= (~BITM_EMAC_MACCFG_DM);
+        phyRegData &= (~BITM_EMAC_MACCFG_DM);
     }
 
     /* Set the configuration required for 10/100/1000Mbps speed */
     if (nAutoNegoStatus & ADI_PHY_AN_1000Mbps) {
-    	phyRegData &= (~0x00008000);
+        phyRegData &= (~0x00008000);
     } else {
         phyRegData |= 0x00008000;
         if (nAutoNegoStatus & ADI_PHY_AN_100Mbps) {
-        	phyRegData |= BITM_EMAC_MACCFG_FES;
+            phyRegData |= BITM_EMAC_MACCFG_FES;
         } else {
-        	phyRegData &= ~BITM_EMAC_MACCFG_FES;
+            phyRegData &= ~BITM_EMAC_MACCFG_FES;
         }
     }
 
@@ -777,8 +777,8 @@ static void gemac_autonego_config(ADI_ETHER_HANDLE hDevice, uint32_t nAutoNegoSt
     pEmacRegs->EMAC_MACFRMFILT = phyRegData;
 
     if (nAutoNegoStatus & ADI_PHY_AN_FULL_DUPLEX) {
-    	/* rx,tx flow control */
-    	pEmacRegs->EMAC_FLOWCTL |= ( BITM_EMAC_FLOWCTL_RFE | BITM_EMAC_FLOWCTL_TFE);
+        /* rx,tx flow control */
+        pEmacRegs->EMAC_FLOWCTL |= ( BITM_EMAC_FLOWCTL_RFE | BITM_EMAC_FLOWCTL_TFE);
     } else {
         /* rx,tx flow control - disable */
         pEmacRegs->EMAC_FLOWCTL &= ~( BITM_EMAC_FLOWCTL_RFE | BITM_EMAC_FLOWCTL_TFE);
@@ -817,8 +817,8 @@ static void gemac_autonego_config(ADI_ETHER_HANDLE hDevice, uint32_t nAutoNegoSt
  */
 void PHYCallbackHandler(void* pHandle, uint32_t nEvent, void *Arg)
 {
-	ADI_EMAC_DEVICE*    const  pDev = (ADI_EMAC_DEVICE*)pHandle;
-	ADI_EMAC_REGISTERS* const  pEmacRegs = pDev->pEMAC_REGS;
+    ADI_EMAC_DEVICE*    const  pDev = (ADI_EMAC_DEVICE*)pHandle;
+    ADI_EMAC_REGISTERS* const  pEmacRegs = pDev->pEMAC_REGS;
 
     switch(nEvent)
     {
@@ -833,25 +833,25 @@ void PHYCallbackHandler(void* pHandle, uint32_t nEvent, void *Arg)
 
     case (uint32_t)ADI_PHY_EVENT_LINK_DOWN:
 #ifdef GEMAC_SUPPORT_LPI
-    	if (pDev->Capability & ADI_EMAC_CAPABILITY_LPI)
-    	{
-    		pEmacRegs->EMAC_LPI_CTLSTAT &= (~BITM_EMAC_LPI_CTLSTAT_PLS);
-    	}
+        if (pDev->Capability & ADI_EMAC_CAPABILITY_LPI)
+        {
+            pEmacRegs->EMAC_LPI_CTLSTAT &= (~BITM_EMAC_LPI_CTLSTAT_PLS);
+        }
 #endif
-    	pDev->pEtherCallback(pDev,ADI_ETHER_EVENT_PHY_INTERRUPT,(void*)ADI_ETHER_PHY_LINK_DOWN,
+        pDev->pEtherCallback(pDev,ADI_ETHER_EVENT_PHY_INTERRUPT,(void*)ADI_ETHER_PHY_LINK_DOWN,
             pDev->pUsrPtr);
-    	break;
+        break;
 
     case (uint32_t)ADI_PHY_EVENT_LINK_UP:
 #ifdef GEMAC_SUPPORT_LPI
-    	if (pDev->Capability & ADI_EMAC_CAPABILITY_LPI)
-    	{
-    		pEmacRegs->EMAC_LPI_CTLSTAT |= BITM_EMAC_LPI_CTLSTAT_PLS;
-    	}
+        if (pDev->Capability & ADI_EMAC_CAPABILITY_LPI)
+        {
+            pEmacRegs->EMAC_LPI_CTLSTAT |= BITM_EMAC_LPI_CTLSTAT_PLS;
+        }
 #endif
-    	pDev->pEtherCallback(pDev,ADI_ETHER_EVENT_PHY_INTERRUPT,(void*)ADI_ETHER_PHY_LINK_UP,
+        pDev->pEtherCallback(pDev,ADI_ETHER_EVENT_PHY_INTERRUPT,(void*)ADI_ETHER_PHY_LINK_UP,
             pDev->pUsrPtr);
-    	break;
+        break;
 
     default:
         break;
@@ -880,7 +880,7 @@ void PHYCallbackHandler(void* pHandle, uint32_t nEvent, void *Arg)
  */
 static void process_int(ADI_EMAC_DEVICE *pDev,ADI_EMAC_CHANNEL *pChannel, int32_t nDMADeviceNum)
 {
-	ADI_EMAC_DMA_CHANNEL *pDMAChannel = &pChannel->DMAChan[nDMADeviceNum];
+    ADI_EMAC_DMA_CHANNEL *pDMAChannel = &pChannel->DMAChan[nDMADeviceNum];
     ADI_ETHER_BUFFER *pProcessedBuffer = pDMAChannel->Active.pQueueHead;
     ADI_EMAC_DMADESC *pCurDmaDesc = NULL;
     ADI_ETHER_EVENT   Event;
@@ -930,19 +930,19 @@ static void process_int(ADI_EMAC_DEVICE *pDev,ADI_EMAC_CHANNEL *pChannel, int32_
         {
 
             if (   (    (pChannel->Recv)
-            		&& (pCurDmaDesc->Status & (1u << 7))    /*      Timestamp available bit is set */
-            		&& (pCurDmaDesc->Status & (1u << 8)))   /* AND  Last Descriptor bit is set     */
+                    && (pCurDmaDesc->Status & (1u << 7))    /*      Timestamp available bit is set */
+                    && (pCurDmaDesc->Status & (1u << 8)))   /* AND  Last Descriptor bit is set     */
                 || (    (!pChannel->Recv)
-                	&& (pCurDmaDesc->Status & (1u << 17))   /*      Timestamp available bit is set */
-                	&& (pCurDmaDesc->Status & (1u << 29)))   /* AND  Last Segment bit is set     */
-                	)
+                    && (pCurDmaDesc->Status & (1u << 17))   /*      Timestamp available bit is set */
+                    && (pCurDmaDesc->Status & (1u << 29)))   /* AND  Last Segment bit is set     */
+                    )
             {
-            	/* Mark the status as timestamp available */
-            	pProcessedBuffer->Status |= ADI_ETHER_BUFFER_STATUS_TIMESTAMP_AVAIL;
+                /* Mark the status as timestamp available */
+                pProcessedBuffer->Status |= ADI_ETHER_BUFFER_STATUS_TIMESTAMP_AVAIL;
 
-            	pProcessedBuffer->TimeStamp.HSecond = pDev->pEMAC_REGS->EMAC_TM_HISEC;
-            	pProcessedBuffer->TimeStamp.LSecond = pCurDmaDesc->TimeStampHi;
-            	pProcessedBuffer->TimeStamp.NanoSecond = pCurDmaDesc->TimeStampLo;
+                pProcessedBuffer->TimeStamp.HSecond = pDev->pEMAC_REGS->EMAC_TM_HISEC;
+                pProcessedBuffer->TimeStamp.LSecond = pCurDmaDesc->TimeStampHi;
+                pProcessedBuffer->TimeStamp.NanoSecond = pCurDmaDesc->TimeStampLo;
             }
         }
 #endif
@@ -957,12 +957,12 @@ static void process_int(ADI_EMAC_DEVICE *pDev,ADI_EMAC_CHANNEL *pChannel, int32_
 
          if (pDMAChannel->pDmaDescTail != NULL)
          {
-        	 pDMAChannel->pDmaDescTail->pNextDesc =  pCurDmaDesc;
-        	 pDMAChannel->pDmaDescTail = pCurDmaDesc;
+             pDMAChannel->pDmaDescTail->pNextDesc =  pCurDmaDesc;
+             pDMAChannel->pDmaDescTail = pCurDmaDesc;
          }
          else
          {
-        	 pDMAChannel->pDmaDescHead = pDMAChannel->pDmaDescTail =  pCurDmaDesc;
+             pDMAChannel->pDmaDescHead = pDMAChannel->pDmaDescTail =  pCurDmaDesc;
          }
          pDMAChannel->NumAvailDmaDesc += 1;
     }
@@ -973,11 +973,11 @@ static void process_int(ADI_EMAC_DEVICE *pDev,ADI_EMAC_CHANNEL *pChannel, int32_
     /* Call only if anything is there in there in the completed queue */
     if (pDMAChannel->Completed.pQueueHead)
     {
-		/* return the processed buffers to the application */
-		pDev->pEtherCallback(pDev,Event,pDMAChannel->Completed.pQueueHead, pDev->pUsrPtr);
+        /* return the processed buffers to the application */
+        pDev->pEtherCallback(pDev,Event,pDMAChannel->Completed.pQueueHead, pDev->pUsrPtr);
 
-		/* reset the completed queue */
-		reset_queue(&pDMAChannel->Completed);
+        /* reset the completed queue */
+        reset_queue(&pDMAChannel->Completed);
     }
 
     /* if no more active elements in the queue reset the queue */
@@ -1003,12 +1003,12 @@ static void process_int(ADI_EMAC_DEVICE *pDev,ADI_EMAC_CHANNEL *pChannel, int32_
  */
 static void transfer_queued_bufs(ADI_ETHER_HANDLE phDevice,ADI_EMAC_CHANNEL *pChannel, int32_t nDMADeviceNum)
 {
-	ADI_EMAC_DMA_CHANNEL* pDMAChannel = &pChannel->DMAChan[nDMADeviceNum];
+    ADI_EMAC_DMA_CHANNEL* pDMAChannel = &pChannel->DMAChan[nDMADeviceNum];
 #ifdef ADI_DEBUG
     ADI_EMAC_DEVICE *pDev = (ADI_EMAC_DEVICE*)phDevice;
 #endif
 
-	CHECK_DMA_CHANNEL_NUM(nDMADeviceNum);
+    CHECK_DMA_CHANNEL_NUM(nDMADeviceNum);
 
     /* if buffers are queued and descriptors are available or
      * if buffers are pending - already binded with descriptors
@@ -1121,61 +1121,61 @@ static void handle_abnormal_interrupts(ADI_EMAC_DEVICE *pDev,const uint32_t DmaS
 #if defined(ADI_ETHER_SUPPORT_PPS) && defined(ADI_ETHER_SUPPORT_ALARM)
 void PpsInterruptHandler (ADI_EMAC_DEVICE* pDev)
 {
-	uint32_t nTMStatus = pDev->pEMAC_REGS->EMAC_TM_STMPSTAT;
-	uint32_t nEvent;
-	static uint32_t BITM_Err_Int[] = {
-			BITM_EMAC_TM_STMPSTAT_TSTRGTERR0,
-			BITM_EMAC_TM_STMPSTAT_TSTRGTERR1,
-			BITM_EMAC_TM_STMPSTAT_TSTRGTERR2,
-			BITM_EMAC_TM_STMPSTAT_TSTRGTERR3
-	};
-	static uint32_t BITM_TM_Int[] = {
-			BITM_EMAC_TM_STMPSTAT_TSTARGT0,
-			BITM_EMAC_TM_STMPSTAT_TSTARGT1,
-			BITM_EMAC_TM_STMPSTAT_TSTARGT2,
-			BITM_EMAC_TM_STMPSTAT_TSTARGT3
-	};
+    uint32_t nTMStatus = pDev->pEMAC_REGS->EMAC_TM_STMPSTAT;
+    uint32_t nEvent;
+    static uint32_t BITM_Err_Int[] = {
+            BITM_EMAC_TM_STMPSTAT_TSTRGTERR0,
+            BITM_EMAC_TM_STMPSTAT_TSTRGTERR1,
+            BITM_EMAC_TM_STMPSTAT_TSTRGTERR2,
+            BITM_EMAC_TM_STMPSTAT_TSTRGTERR3
+    };
+    static uint32_t BITM_TM_Int[] = {
+            BITM_EMAC_TM_STMPSTAT_TSTARGT0,
+            BITM_EMAC_TM_STMPSTAT_TSTARGT1,
+            BITM_EMAC_TM_STMPSTAT_TSTARGT2,
+            BITM_EMAC_TM_STMPSTAT_TSTARGT3
+    };
 
-	/* Handle all the interrupts */
-	{
-		uint32_t nDeviceID;
+    /* Handle all the interrupts */
+    {
+        uint32_t nDeviceID;
 
-		uint32_t x;
-		for (x = 0; x < (sizeof(BITM_Err_Int)/sizeof(uint32_t)); x++) {
-			if (nTMStatus & (BITM_Err_Int[x] | BITM_TM_Int[x]))
-			{
-				nDeviceID = x;
+        uint32_t x;
+        for (x = 0; x < (sizeof(BITM_Err_Int)/sizeof(uint32_t)); x++) {
+            if (nTMStatus & (BITM_Err_Int[x] | BITM_TM_Int[x]))
+            {
+                nDeviceID = x;
 
                 /* IF (Interrupt is generated for enabled devices) */
                 if (pDev->PPS_Alarm_Devices[nDeviceID].bEnabled) {
-    				if (nTMStatus & BITM_Err_Int[x]) {
-    					nEvent = (pDev->PPS_Alarm_Devices[x].bAlarm) ? ADI_ETHER_EVENT_ALARM_ERROR : ADI_ETHER_EVENT_PPS_ERROR;
-    					pDev->PPS_Alarm_Devices[x].bEnabled = false;
-    					if (pDev->PPS_Alarm_Devices[x].pfCallback != NULL) {
-    						pDev->PPS_Alarm_Devices[x].pfCallback(pDev, nEvent, (void*)nDeviceID, pDev->pUsrPtr);
-    					}
-    				}
+                    if (nTMStatus & BITM_Err_Int[x]) {
+                        nEvent = (pDev->PPS_Alarm_Devices[x].bAlarm) ? ADI_ETHER_EVENT_ALARM_ERROR : ADI_ETHER_EVENT_PPS_ERROR;
+                        pDev->PPS_Alarm_Devices[x].bEnabled = false;
+                        if (pDev->PPS_Alarm_Devices[x].pfCallback != NULL) {
+                            pDev->PPS_Alarm_Devices[x].pfCallback(pDev, nEvent, (void*)nDeviceID, pDev->pUsrPtr);
+                        }
+                    }
 
-    				if (nTMStatus & BITM_TM_Int[x])
+                    if (nTMStatus & BITM_TM_Int[x])
                     {
-    					nEvent = (pDev->PPS_Alarm_Devices[x].bAlarm)
+                        nEvent = (pDev->PPS_Alarm_Devices[x].bAlarm)
                                     ? ADI_ETHER_EVENT_ALARM_INTERRUPT : ADI_ETHER_EVENT_PPS_INTERRUPT;
-    					if ((pDev->PPS_Alarm_Devices[x].bAlarm) || (pDev->PPS_Alarm_Devices[x].ePulseMode == ADI_ETHER_GEMAC_PPS_PULSE_MODE_SINGLE)) {
-    						pDev->PPS_Alarm_Devices[x].bEnabled = false;
-    					}
+                        if ((pDev->PPS_Alarm_Devices[x].bAlarm) || (pDev->PPS_Alarm_Devices[x].ePulseMode == ADI_ETHER_GEMAC_PPS_PULSE_MODE_SINGLE)) {
+                            pDev->PPS_Alarm_Devices[x].bEnabled = false;
+                        }
                         pps_set_trigger_mode(pDev, x, PPS_TRIG_MODE_PULSE_ONLY);
-    					if (pDev->PPS_Alarm_Devices[x].pfCallback != NULL) {
-    						if (pDev->PPS_Alarm_Devices[x].bTriggerPending) {
-    							pDev->PPS_Alarm_Devices[x].pfCallback(pDev, nEvent, (void*)nDeviceID, pDev->pUsrPtr);
-    						}
-    					}
-    					pDev->PPS_Alarm_Devices[x].bTriggerPending = false;
-    				}
+                        if (pDev->PPS_Alarm_Devices[x].pfCallback != NULL) {
+                            if (pDev->PPS_Alarm_Devices[x].bTriggerPending) {
+                                pDev->PPS_Alarm_Devices[x].pfCallback(pDev, nEvent, (void*)nDeviceID, pDev->pUsrPtr);
+                            }
+                        }
+                        pDev->PPS_Alarm_Devices[x].bTriggerPending = false;
+                    }
                 } else {
                     pps_set_trigger_mode(pDev, nDeviceID, PPS_TRIG_MODE_PULSE_ONLY);
                 }
-			}
-		}
+            }
+        }
 
         for (x = 0; x < (sizeof(BITM_Err_Int)/sizeof(uint32_t)); x++) {
             if (    (pDev->PPS_Alarm_Devices[x].bTriggerPending == true)
@@ -1188,7 +1188,7 @@ void PpsInterruptHandler (ADI_EMAC_DEVICE* pDev)
 
 
 
-	}
+    }
 }
 #endif
 
@@ -1227,9 +1227,7 @@ void EMACInterruptHandler(uint32_t IID, void *pCBParm)
     int x;
 
 #ifdef FEATURE_CPU_LOAD
-    uint32_t inCycles, outCycles;
-    /* Track ISR cycle count for CPU load */
-    inCycles = cpuLoadGetTimeStamp();
+    cpuLoadISREnter();
 #endif
 
     SYS_SSYNC;
@@ -1240,19 +1238,19 @@ void EMACInterruptHandler(uint32_t IID, void *pCBParm)
 
 #ifdef ADI_ETHER_SUPPORT_AV
     if (   (pDev->Capability      &  ADI_EMAC_CAPABILITY_AV_DMA1)
-    	&& (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_EN))
+        && (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_EN))
     {
-    	dma_status[1] =  pEmacRegs->EMAC_DMA1_STAT;
-    	/* acknowledge dma interrupts */
-    	pEmacRegs->EMAC_DMA1_STAT = dma_status[1] & 0x1FFFF;
+        dma_status[1] =  pEmacRegs->EMAC_DMA1_STAT;
+        /* acknowledge dma interrupts */
+        pEmacRegs->EMAC_DMA1_STAT = dma_status[1] & 0x1FFFF;
     }
 
     if (   (pDev->Capability      &  ADI_EMAC_CAPABILITY_AV_DMA2)
-    	&& (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_EN))
+        && (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_EN))
     {
-    	dma_status[2] =  pEmacRegs->EMAC_DMA2_STAT;
-    	/* acknowledge dma interrupts */
-    	pEmacRegs->EMAC_DMA2_STAT = dma_status[2] & 0x1FFFF;
+        dma_status[2] =  pEmacRegs->EMAC_DMA2_STAT;
+        /* acknowledge dma interrupts */
+        pEmacRegs->EMAC_DMA2_STAT = dma_status[2] & 0x1FFFF;
     }
 #endif
 
@@ -1266,23 +1264,37 @@ void EMACInterruptHandler(uint32_t IID, void *pCBParm)
 #ifdef GEMAC_SUPPORT_RGMII
     if (pDev->Capability & ADI_EMAC_CAPABILITY_RGMII)
     {
-		/* GMAC line interface interrupt */
-		if (mashed_status & BITM_EMAC_DMA0_STAT_GLI)
-		{
-			uint32_t IStat = pEmacRegs->EMAC_ISTAT;
+        /* GMAC line interface interrupt */
+        if (mashed_status & BITM_EMAC_DMA0_STAT_GLI)
+        {
+            uint32_t IStat = pEmacRegs->EMAC_ISTAT;
 
-			/* SMII or RGMII : Link change event occurred */
-			if (IStat & BITM_EMAC_ISTAT_RGMIIIS)
-			{
-				uint32_t VAR_UNUSED_DECR(nCtrlStatusReg);
+            /* SMII or RGMII : Link change event occurred */
+            if (IStat & BITM_EMAC_ISTAT_RGMIIIS)
+            {
+                uint32_t VAR_UNUSED_DECR(nCtrlStatusReg);
 
-				/* Read the RGMII Control and Status Register to clear the interrupt */
-				nCtrlStatusReg = pEmacRegs->EMAC_GIGE_CTLSTAT;
-			}
+                /* Read the RGMII Control and Status Register to clear the interrupt */
+                nCtrlStatusReg = pEmacRegs->EMAC_GIGE_CTLSTAT;
+            }
 
-			/* General Purpose Input Status event occurred */
-			/* PCS (TVI, RTBI, SGMII) Interrupt occurred */
-		}
+            /* General Purpose Input Status event occurred */
+            /* PCS (TVI, RTBI, SGMII) Interrupt occurred */
+        }
+    }
+#endif
+
+#ifdef GEMAC_SUPPORT_LPI
+    if (pDev->Capability & ADI_EMAC_CAPABILITY_LPI)
+    {
+        /* GLPI interrupt */
+        if (mashed_status & BITM_EMAC_DMA0_STAT_GLPII)
+        {
+            uint32_t VAR_UNUSED_DECR(nLPIStat);
+
+            /* Read the LPI_CTLSTAT register to clear the interrupt */
+            nLPIStat = pEmacRegs->EMAC_LPI_CTLSTAT;
+        }
     }
 #endif
 
@@ -1291,7 +1303,7 @@ void EMACInterruptHandler(uint32_t IID, void *pCBParm)
     {
 #ifdef ADI_ETHER_SUPPORT_PPS
         if (pDev->Capability & ADI_EMAC_CAPABILITY_PPS) {
-    	       PpsInterruptHandler(pDev);
+               PpsInterruptHandler(pDev);
         }
 #endif
     }
@@ -1305,43 +1317,41 @@ void EMACInterruptHandler(uint32_t IID, void *pCBParm)
 
     for (x = (pDev->nNumDmaChannels - 1); x >= 0; x--)
     {
-		/* receive frame interrupt */
-		if (dma_status[x] & BITM_EMAC_DMA_STAT_RI)
-		{
-		   STATS_INC(pDev->Stats.RxIntCnt);
-		   process_int(pDev,&pDev->Rx, x);
-		}
+        /* receive frame interrupt */
+        if (dma_status[x] & BITM_EMAC_DMA_STAT_RI)
+        {
+           STATS_INC(pDev->Stats.RxIntCnt);
+           process_int(pDev,&pDev->Rx, x);
+        }
 
-		/* transmit complete interrupt */
-		if (dma_status[x] &  BITM_EMAC_DMA_STAT_TI)
-		{
-		   STATS_INC(pDev->Stats.TxIntCnt);
-		   process_int(pDev,&pDev->Tx, x);
-		}
+        /* transmit complete interrupt */
+        if (dma_status[x] &  BITM_EMAC_DMA_STAT_TI)
+        {
+           STATS_INC(pDev->Stats.TxIntCnt);
+           process_int(pDev,&pDev->Tx, x);
+        }
 
-		/* abnormal interrupts - errors */
-		if (dma_status[x] & BITM_EMAC_DMA_STAT_AIS)
-		{
-			handle_abnormal_interrupts(pDev,dma_status[x], x);
-		}
+        /* abnormal interrupts - errors */
+        if (dma_status[x] & BITM_EMAC_DMA_STAT_AIS)
+        {
+            handle_abnormal_interrupts(pDev,dma_status[x], x);
+        }
 
-		/* no buffer to transmit - tx in suspended state check queued buffers */
-		if (gemac_is_txbuf_unavail(dma_status[x]))
-		{
-		   transfer_queued_bufs(pDev,&pDev->Tx, x);
-		}
+        /* no buffer to transmit - tx in suspended state check queued buffers */
+        if (gemac_is_txbuf_unavail(dma_status[x]))
+        {
+           transfer_queued_bufs(pDev,&pDev->Tx, x);
+        }
 
-		/* no receive buffer available -rx suspeneded */
-		if (gemac_is_rxbuf_unavail(dma_status[x]))
-		{
-		   transfer_queued_bufs(pDev,&pDev->Rx, x);
-		}
-	}
+        /* no receive buffer available -rx suspeneded */
+        if (gemac_is_rxbuf_unavail(dma_status[x]))
+        {
+           transfer_queued_bufs(pDev,&pDev->Rx, x);
+        }
+    }
 
 #ifdef FEATURE_CPU_LOAD
-    /* Track ISR cycle count for CPU load */
-    outCycles = cpuLoadGetTimeStamp();
-    cpuLoadIsrCycles(outCycles - inCycles);
+    cpuLoadISRExit();
 #endif
 }
 
@@ -1359,32 +1369,32 @@ void EMACInterruptHandler(uint32_t IID, void *pCBParm)
  */
 static void set_gemac_handle(const ADI_ETHER_DRIVER_ENTRY *pEntryPoint, ADI_ETHER_HANDLE*  const phDevice)
 {
-	gEMAC0.Interrupt = (uint32_t)INTR_EMAC0_STAT;
-	gEMAC0.pPhyDevice = &PhyDevice[0];
-	gEMAC0.Capability = GEMAC0_CAPABILITY;
-	gEMAC0.nNumDmaChannels = GEMAC0_NUM_DMA_DEVICES;
+    gEMAC0.Interrupt = (uint32_t)INTR_EMAC0_STAT;
+    gEMAC0.pPhyDevice = &PhyDevice[0];
+    gEMAC0.Capability = GEMAC0_CAPABILITY;
+    gEMAC0.nNumDmaChannels = GEMAC0_NUM_DMA_DEVICES;
 
 #ifdef GEMAC_SUPPORT_EMAC1
-	gEMAC1.Interrupt = (uint32_t)INTR_EMAC1_STAT;
-	gEMAC1.pPhyDevice = &PhyDevice[1];
-	gEMAC1.Capability = GEMAC1_CAPABILITY;
-	gEMAC1.nNumDmaChannels = GEMAC1_NUM_DMA_DEVICES;
+    gEMAC1.Interrupt = (uint32_t)INTR_EMAC1_STAT;
+    gEMAC1.pPhyDevice = &PhyDevice[1];
+    gEMAC1.Capability = GEMAC1_CAPABILITY;
+    gEMAC1.nNumDmaChannels = GEMAC1_NUM_DMA_DEVICES;
 #endif
 
-	if (pEntryPoint == &GEMAC0DriverEntry)
-	{
-		*phDevice = &gEMAC0;
-	}
+    if (pEntryPoint == &GEMAC0DriverEntry)
+    {
+        *phDevice = &gEMAC0;
+    }
 #ifdef GEMAC_SUPPORT_EMAC1
-	else if (pEntryPoint == &GEMAC1DriverEntry)
-	{
-		*phDevice = &gEMAC1;
-	}
+    else if (pEntryPoint == &GEMAC1DriverEntry)
+    {
+        *phDevice = &gEMAC1;
+    }
 #endif
-	else
-	{
-		*phDevice = NULL;
-	}
+    else
+    {
+        *phDevice = NULL;
+    }
 }
 
 /**
@@ -1412,66 +1422,66 @@ void set_init_params(ADI_ETHER_HANDLE *phDevice, ADI_ETHER_DEV_INIT* const pDevi
     /* Check the commands passed to the driver */
     if (pDeviceInit->pCmdArgArray)
     {
-    	int index = 0;
-    	while (pDeviceInit->pCmdArgArray[index].cmd != ADI_ETHER_CMD_END_OF_ARRAY) {
-    		switch (pDeviceInit->pCmdArgArray[index].cmd)
-    		{
-    		case (uint32_t)ADI_ETHER_CMD_SET_PHY_SPEED:
-    			{
-    				uint32_t arg = (uint32_t)pDeviceInit->pCmdArgArray[index].arg;
+        int index = 0;
+        while (pDeviceInit->pCmdArgArray[index].cmd != ADI_ETHER_CMD_END_OF_ARRAY) {
+            switch (pDeviceInit->pCmdArgArray[index].cmd)
+            {
+            case (uint32_t)ADI_ETHER_CMD_SET_PHY_SPEED:
+                {
+                    uint32_t arg = (uint32_t)pDeviceInit->pCmdArgArray[index].arg;
 
-    				switch (arg)
-    				{
-    				case (uint32_t)ADI_ETHER_ARG_PHY_SPEED_AUTO_NEGOTIATE:
-    					pDev->nPhyConfig = ADI_GEMAC_PHY_CFG_AUTO_NEGOTIATE_EN;
-    					break;
+                    switch (arg)
+                    {
+                    case (uint32_t)ADI_ETHER_ARG_PHY_SPEED_AUTO_NEGOTIATE:
+                        pDev->nPhyConfig = ADI_GEMAC_PHY_CFG_AUTO_NEGOTIATE_EN;
+                        break;
 
-    				case (uint32_t)ADI_ETHER_ARG_PHY_SPEED_10T_HALF_DUPLEX:
-    					pDev->nPhyConfig = ADI_GEMAC_PHY_CFG_10Mbps_EN;
-    					break;
+                    case (uint32_t)ADI_ETHER_ARG_PHY_SPEED_10T_HALF_DUPLEX:
+                        pDev->nPhyConfig = ADI_GEMAC_PHY_CFG_10Mbps_EN;
+                        break;
 
-    				case (uint32_t)ADI_ETHER_ARG_PHY_SPEED_10T_FULL_DUPLEX:
-    					pDev->nPhyConfig =   ADI_GEMAC_PHY_CFG_FULL_DUPLEX_EN
-    					                   | ADI_GEMAC_PHY_CFG_10Mbps_EN;
-    					break;
+                    case (uint32_t)ADI_ETHER_ARG_PHY_SPEED_10T_FULL_DUPLEX:
+                        pDev->nPhyConfig =   ADI_GEMAC_PHY_CFG_FULL_DUPLEX_EN
+                                           | ADI_GEMAC_PHY_CFG_10Mbps_EN;
+                        break;
 
-    				case (uint32_t)ADI_ETHER_ARG_PHY_SPEED_100T_HALF_DUPLEX:
-    					pDev->nPhyConfig = ADI_GEMAC_PHY_CFG_100Mbps_EN;
-    					break;
+                    case (uint32_t)ADI_ETHER_ARG_PHY_SPEED_100T_HALF_DUPLEX:
+                        pDev->nPhyConfig = ADI_GEMAC_PHY_CFG_100Mbps_EN;
+                        break;
 
-    				case (uint32_t)ADI_ETHER_ARG_PHY_SPEED_100T_FULL_DUPLEX:
-    					pDev->nPhyConfig =   ADI_GEMAC_PHY_CFG_FULL_DUPLEX_EN
-    					                   | ADI_GEMAC_PHY_CFG_100Mbps_EN;
-    					break;
+                    case (uint32_t)ADI_ETHER_ARG_PHY_SPEED_100T_FULL_DUPLEX:
+                        pDev->nPhyConfig =   ADI_GEMAC_PHY_CFG_FULL_DUPLEX_EN
+                                           | ADI_GEMAC_PHY_CFG_100Mbps_EN;
+                        break;
 
-    				case (uint32_t)ADI_ETHER_ARG_PHY_SPEED_1000T_HALF_DUPLEX:
-    					pDev->nPhyConfig = ADI_GEMAC_PHY_CFG_1000Mbps_EN;
-    					break;
+                    case (uint32_t)ADI_ETHER_ARG_PHY_SPEED_1000T_HALF_DUPLEX:
+                        pDev->nPhyConfig = ADI_GEMAC_PHY_CFG_1000Mbps_EN;
+                        break;
 
-    				case (uint32_t)ADI_ETHER_ARG_PHY_SPEED_1000T_FULL_DUPLEX:
-    					pDev->nPhyConfig =   ADI_GEMAC_PHY_CFG_FULL_DUPLEX_EN
-    					                   | ADI_GEMAC_PHY_CFG_1000Mbps_EN;
-    					break;
+                    case (uint32_t)ADI_ETHER_ARG_PHY_SPEED_1000T_FULL_DUPLEX:
+                        pDev->nPhyConfig =   ADI_GEMAC_PHY_CFG_FULL_DUPLEX_EN
+                                           | ADI_GEMAC_PHY_CFG_1000Mbps_EN;
+                        break;
 
-    				default:
-    					break;
-    				}
-    			}
-    			break;
-    		case (uint32_t)ADI_GEMAC_CMD_TX_INTERRUPT_MAX_PERIOD:
-    			{
-    				uint32_t arg = (uint32_t)pDeviceInit->pCmdArgArray[index].arg;
-					pDev->TxIntPeriod = arg;
-    			}
-    			break;
+                    default:
+                        break;
+                    }
+                }
+                break;
+            case (uint32_t)ADI_GEMAC_CMD_TX_INTERRUPT_MAX_PERIOD:
+                {
+                    uint32_t arg = (uint32_t)pDeviceInit->pCmdArgArray[index].arg;
+                    pDev->TxIntPeriod = arg;
+                }
+                break;
 
-    		default:
-    			break;
-    		}
+            default:
+                break;
+            }
 
-    		/* Increment the index */
-    		index++;
-    	}
+            /* Increment the index */
+            index++;
+        }
     }
 }
 
@@ -1506,17 +1516,17 @@ static uint32_t gemac_init(ADI_ETHER_HANDLE * const phDevice)
         reg_data |= BITM_EMAC_MACCFG_DM;
     }
 
-	/* Set the configuration required for 10/100/1000Mbps speed */
-	if (pDev->nPhyConfig &  ADI_GEMAC_PHY_CFG_1000Mbps_EN) {
-		reg_data &= (~0x00008000);
-	} else {
-		reg_data |= 0x00008000;
-		if (pDev->nPhyConfig & ADI_GEMAC_PHY_CFG_100Mbps_EN) {
-			reg_data |= BITM_EMAC_MACCFG_FES;
-		} else {
-			reg_data &= ~BITM_EMAC_MACCFG_FES;
-		}
-	}
+    /* Set the configuration required for 10/100/1000Mbps speed */
+    if (pDev->nPhyConfig &  ADI_GEMAC_PHY_CFG_1000Mbps_EN) {
+        reg_data &= (~0x00008000);
+    } else {
+        reg_data |= 0x00008000;
+        if (pDev->nPhyConfig & ADI_GEMAC_PHY_CFG_100Mbps_EN) {
+            reg_data |= BITM_EMAC_MACCFG_FES;
+        } else {
+            reg_data &= ~BITM_EMAC_MACCFG_FES;
+        }
+    }
 
 //    reg_data  |= (BITM_EMAC_MACCFG_PS | BITM_EMAC_MACCFG_TE |
     reg_data  |=  (BITM_EMAC_MACCFG_TE | BITM_EMAC_MACCFG_RE | BITM_EMAC_MACCFG_CST);
@@ -1531,14 +1541,11 @@ static uint32_t gemac_init(ADI_ETHER_HANDLE * const phDevice)
                                  BITM_EMAC_MACFRMFILT_HMC |
                                  BITM_EMAC_MACFRMFILT_HUC;
 #else
-    pEmacRegs->EMAC_MACFRMFILT = BITM_EMAC_MACFRMFILT_HPF  |
+    pEmacRegs->EMAC_MACFRMFILT = BITM_EMAC_MACFRMFILT_RA  |
                                  BITM_EMAC_MACFRMFILT_PM   |
+                                 BITM_EMAC_MACFRMFILT_HPF  |
                                  BITM_EMAC_MACFRMFILT_IPFE |
                                  0;
-    if (phDevice == (ADI_ETHER_HANDLE *)&gEMAC0) {
-        pEmacRegs->EMAC_MACFRMFILT |= BITM_EMAC_MACFRMFILT_DAIF;
-    }
-
 #endif
 
     /* setup flow control options */
@@ -1551,7 +1558,7 @@ static uint32_t gemac_init(ADI_ETHER_HANDLE * const phDevice)
     /* Set the Interrupt Mask register to mask RGMII Interrupt */
     if (pDev->Capability & ADI_EMAC_CAPABILITY_RGMII)
     {
-    	gemac_set_macimask(phDevice, BITM_EMAC_ISTAT_RGMIIIS);
+        gemac_set_macimask(phDevice, BITM_EMAC_ISTAT_RGMIIIS);
     }
 #endif /* GEMAC_SUPPORT_RGMII */
 
@@ -1611,10 +1618,10 @@ static uint32_t gemac_init(ADI_ETHER_HANDLE * const phDevice)
  * @sa          adi_Ether_EnableMAC()
  */
 ADI_ETHER_RESULT adi_ether_GemacOpen(
-									 ADI_ETHER_DRIVER_ENTRY* const pEntryPoint,
-									 ADI_ETHER_DEV_INIT*     const pDeviceInit,
-									 ADI_ETHER_CALLBACK_FN   const pfCallback,
-									 ADI_ETHER_HANDLE*       const phDevice,
+                                     ADI_ETHER_DRIVER_ENTRY* const pEntryPoint,
+                                     ADI_ETHER_DEV_INIT*     const pDeviceInit,
+                                     ADI_ETHER_CALLBACK_FN   const pfCallback,
+                                     ADI_ETHER_HANDLE*       const phDevice,
                                      void*                   const pUsrPtr
                                      )
 {
@@ -1666,9 +1673,9 @@ ADI_ETHER_RESULT adi_ether_GemacOpen(
 
         /* stop transmit and receive (DMA 0,1,2) and mask interrupts */
         for (nDMADeviceNum = 0; nDMADeviceNum < pDev->nNumDmaChannels; nDMADeviceNum++) {
-        	gemac_stop_rx(pDev,   nDMADeviceNum);
-        	gemac_stop_tx(pDev,   nDMADeviceNum);
-        	mask_gemac_ints(pDev, nDMADeviceNum);
+            gemac_stop_rx(pDev,   nDMADeviceNum);
+            gemac_stop_tx(pDev,   nDMADeviceNum);
+            mask_gemac_ints(pDev, nDMADeviceNum);
         }
 
         /* reset the dma descriptor lists */
@@ -1684,21 +1691,21 @@ ADI_ETHER_RESULT adi_ether_GemacOpen(
 
         /* setup rx descriptor list */
         Result = init_descriptor_memory(
-        								pDev,
-        								(uint8_t*)pDeviceInit->pEtherMemory->pRecvMem,
-                             	 	 	pDeviceInit->pEtherMemory->RecvMemLen,
-                             	 	 	&pDev->Rx
-                             	 	 	);
+                                        pDev,
+                                        (uint8_t*)pDeviceInit->pEtherMemory->pRecvMem,
+                                        pDeviceInit->pEtherMemory->RecvMemLen,
+                                        &pDev->Rx
+                                        );
 
         /* setup tx descriptor list */
         if (Result == ADI_ETHER_RESULT_SUCCESS)
         {
             Result = init_descriptor_memory (
-            								 pDev,
-            								 (uint8_t*)pDeviceInit->pEtherMemory->pTransmitMem,
-            								 pDeviceInit->pEtherMemory->TransmitMemLen,
-            								 &pDev->Tx
-            								 );
+                                             pDev,
+                                             (uint8_t*)pDeviceInit->pEtherMemory->pTransmitMem,
+                                             pDeviceInit->pEtherMemory->TransmitMemLen,
+                                             &pDev->Tx
+                                             );
         }
 
         /* Register Ehernet Interrupt Handler and enable it */
@@ -1709,7 +1716,7 @@ ADI_ETHER_RESULT adi_ether_GemacOpen(
                                   true
                                   ) != ADI_INT_SUCCESS)
          {
-        	pDev->Opened = false;
+            pDev->Opened = false;
              return (ADI_ETHER_RESULT_FAILED);
          }
     }
@@ -1789,7 +1796,7 @@ ADI_ETHER_RESULT adi_ether_GemacRead( ADI_ETHER_HANDLE const phDevice,
                                              ADI_ETHER_BUFFER *pBuffer
                                            )
 {
-	ADI_ETHER_RESULT eResult = ADI_ETHER_RESULT_SUCCESS;
+    ADI_ETHER_RESULT eResult = ADI_ETHER_RESULT_SUCCESS;
     ADI_EMAC_DEVICE*    const  pDev      = (ADI_EMAC_DEVICE*)phDevice;
 #ifdef ADI_ETHER_SUPPORT_AV
     ADI_ETHER_BUFFER* pIntBuffer;
@@ -1799,21 +1806,21 @@ ADI_ETHER_RESULT adi_ether_GemacRead( ADI_ETHER_HANDLE const phDevice,
 #ifdef ADI_ETHER_SUPPORT_AV
     if ((pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_AV_EN) && (pDev->Capability & ADI_EMAC_CAPABILITY_AV))
     {
-		pIntBuffer = pBuffer;
-		while (pIntBuffer)
-		{
-			if (
-					(pIntBuffer->nChannel >= GEMAC_SUPPORT_NUM_DMA_DEVICES)
-				||  ((pIntBuffer->nChannel == 1) && (!(pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_RX_EN)))
-				||  ((pIntBuffer->nChannel == 2) && (!(pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_RX_EN)))
-				)
-			{
-				return ADI_ETHER_RESULT_INVALID_PARAM;
-			}
+        pIntBuffer = pBuffer;
+        while (pIntBuffer)
+        {
+            if (
+                    (pIntBuffer->nChannel >= GEMAC_SUPPORT_NUM_DMA_DEVICES)
+                ||  ((pIntBuffer->nChannel == 1) && (!(pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_RX_EN)))
+                ||  ((pIntBuffer->nChannel == 2) && (!(pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_RX_EN)))
+                )
+            {
+                return ADI_ETHER_RESULT_INVALID_PARAM;
+            }
 
-			/* Get the next buffer in the list */
-			pIntBuffer = pIntBuffer->pNext;
-		}
+            /* Get the next buffer in the list */
+            pIntBuffer = pIntBuffer->pNext;
+        }
     }
 #endif
 #endif
@@ -1821,38 +1828,38 @@ ADI_ETHER_RESULT adi_ether_GemacRead( ADI_ETHER_HANDLE const phDevice,
 #ifdef ADI_ETHER_SUPPORT_AV
     if ((pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_AV_EN) && (pDev->Capability & ADI_EMAC_CAPABILITY_AV))
     {
-		while (pBuffer) {
+        while (pBuffer) {
 
-			/* Extract the first buffer */
-			pIntBuffer = pBuffer;
-			pBuffer = pBuffer->pNext;
-			pIntBuffer->pNext = NULL;
+            /* Extract the first buffer */
+            pIntBuffer = pBuffer;
+            pBuffer = pBuffer->pNext;
+            pIntBuffer->pNext = NULL;
 
-			/* Insert the buffer into the queued list */
-			eResult = insert_queue(&pDev->Rx.DMAChan[pIntBuffer->nChannel].Queued, pIntBuffer);
+            /* Insert the buffer into the queued list */
+            eResult = insert_queue(&pDev->Rx.DMAChan[pIntBuffer->nChannel].Queued, pIntBuffer);
 
-			if (eResult != ADI_ETHER_RESULT_SUCCESS) { return eResult; }
-		}
+            if (eResult != ADI_ETHER_RESULT_SUCCESS) { return eResult; }
+        }
     }
     else
 #endif
     {
 
-		/* Insert the buffer into the queued list */
-		eResult = insert_queue(&pDev->Rx.DMAChan[0].Queued, pBuffer);
+        /* Insert the buffer into the queued list */
+        eResult = insert_queue(&pDev->Rx.DMAChan[0].Queued, pBuffer);
 
     }
 
     if(pDev->Started)
-	{
-    	int nDMADeviceNum;
-    	for (nDMADeviceNum = (pDev->nNumDmaChannels - 1); nDMADeviceNum >= 0; nDMADeviceNum--) {
-			/* Bind buffers with descriptors and if successful activate for all DMA Channel */
-			if (eResult == ADI_ETHER_RESULT_SUCCESS) {
-				eResult = bind_desc_and_activate(phDevice, &pDev->Rx, nDMADeviceNum);
-			}
-    	}
-	}
+    {
+        int nDMADeviceNum;
+        for (nDMADeviceNum = (pDev->nNumDmaChannels - 1); nDMADeviceNum >= 0; nDMADeviceNum--) {
+            /* Bind buffers with descriptors and if successful activate for all DMA Channel */
+            if (eResult == ADI_ETHER_RESULT_SUCCESS) {
+                eResult = bind_desc_and_activate(phDevice, &pDev->Rx, nDMADeviceNum);
+            }
+        }
+    }
 
 
     return eResult;
@@ -1893,7 +1900,7 @@ ADI_ETHER_RESULT adi_ether_GemacRead( ADI_ETHER_HANDLE const phDevice,
 ADI_ETHER_RESULT adi_ether_GemacWrite( ADI_ETHER_HANDLE const phDevice,
                                        ADI_ETHER_BUFFER *pBuffer )
 {
-	ADI_ETHER_RESULT  eResult = ADI_ETHER_RESULT_SUCCESS;
+    ADI_ETHER_RESULT  eResult = ADI_ETHER_RESULT_SUCCESS;
     ADI_EMAC_DEVICE*  const  pDev      = (ADI_EMAC_DEVICE*)phDevice;
 #ifdef ADI_ETHER_SUPPORT_AV
     ADI_ETHER_BUFFER* pIntBuffer;
@@ -1903,23 +1910,23 @@ ADI_ETHER_RESULT adi_ether_GemacWrite( ADI_ETHER_HANDLE const phDevice,
 #ifdef ADI_ETHER_SUPPORT_AV
     if ((pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_AV_EN) && (pDev->Capability & ADI_EMAC_CAPABILITY_AV))
     {
-		pIntBuffer = pBuffer;
-		while (pIntBuffer)
-		{
-			if (
-					(pIntBuffer->nChannel >= GEMAC_SUPPORT_NUM_DMA_DEVICES)
-				||  ((pIntBuffer->nChannel == 1) && (!(pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_TX_EN)))
-				||  ((pIntBuffer->nChannel == 2) && (!(pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_TX_EN)))
-				||  ((pIntBuffer->nChannel == 1) && (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_SLOT_EN) && (pIntBuffer->nSlot >= 16u))
-				||  ((pIntBuffer->nChannel == 2) && (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_SLOT_EN) && (pIntBuffer->nSlot >= 16u))
-				)
-			{
-				return ADI_ETHER_RESULT_INVALID_PARAM;
-			}
+        pIntBuffer = pBuffer;
+        while (pIntBuffer)
+        {
+            if (
+                    (pIntBuffer->nChannel >= GEMAC_SUPPORT_NUM_DMA_DEVICES)
+                ||  ((pIntBuffer->nChannel == 1) && (!(pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_TX_EN)))
+                ||  ((pIntBuffer->nChannel == 2) && (!(pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_TX_EN)))
+                ||  ((pIntBuffer->nChannel == 1) && (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_SLOT_EN) && (pIntBuffer->nSlot >= 16u))
+                ||  ((pIntBuffer->nChannel == 2) && (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_SLOT_EN) && (pIntBuffer->nSlot >= 16u))
+                )
+            {
+                return ADI_ETHER_RESULT_INVALID_PARAM;
+            }
 
-			/* Get the next buffer in the list */
-			pIntBuffer = pIntBuffer->pNext;
-		}
+            /* Get the next buffer in the list */
+            pIntBuffer = pIntBuffer->pNext;
+        }
     }
 #endif
 #endif
@@ -1927,38 +1934,38 @@ ADI_ETHER_RESULT adi_ether_GemacWrite( ADI_ETHER_HANDLE const phDevice,
 #ifdef ADI_ETHER_SUPPORT_AV
     if ((pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_AV_EN) && (pDev->Capability & ADI_EMAC_CAPABILITY_AV))
     {
-		while (pBuffer) {
+        while (pBuffer) {
 
-			/* Extract the first buffer */
-			pIntBuffer = pBuffer;
-			pBuffer = pBuffer->pNext;
-			pIntBuffer->pNext = NULL;
+            /* Extract the first buffer */
+            pIntBuffer = pBuffer;
+            pBuffer = pBuffer->pNext;
+            pIntBuffer->pNext = NULL;
 
-			/* Insert the buffer into the queued list */
-			eResult = insert_queue(&pDev->Tx.DMAChan[pIntBuffer->nChannel].Queued, pIntBuffer);
+            /* Insert the buffer into the queued list */
+            eResult = insert_queue(&pDev->Tx.DMAChan[pIntBuffer->nChannel].Queued, pIntBuffer);
 
-			if (eResult != ADI_ETHER_RESULT_SUCCESS) { return eResult; }
-		}
+            if (eResult != ADI_ETHER_RESULT_SUCCESS) { return eResult; }
+        }
     }
     else
 #endif
     {
-		/* Insert the buffer into the queued list */
-		eResult = insert_queue(&pDev->Tx.DMAChan[0].Queued, pBuffer);
+        /* Insert the buffer into the queued list */
+        eResult = insert_queue(&pDev->Tx.DMAChan[0].Queued, pBuffer);
 
     }
 
     if(pDev->Started)
-	{
-    	int nDMADeviceNum;
-    	for (nDMADeviceNum = (pDev->nNumDmaChannels - 1); nDMADeviceNum >= 0; nDMADeviceNum--) {
-			/* Bind buffers with descriptors and if successful activate for all DMA Channel */
-			if (eResult == ADI_ETHER_RESULT_SUCCESS) {
-				eResult = bind_desc_and_activate(phDevice, &pDev->Tx, nDMADeviceNum);
-			}
-    	}
+    {
+        int nDMADeviceNum;
+        for (nDMADeviceNum = (pDev->nNumDmaChannels - 1); nDMADeviceNum >= 0; nDMADeviceNum--) {
+            /* Bind buffers with descriptors and if successful activate for all DMA Channel */
+            if (eResult == ADI_ETHER_RESULT_SUCCESS) {
+                eResult = bind_desc_and_activate(phDevice, &pDev->Tx, nDMADeviceNum);
+            }
+        }
 
-	}
+    }
 
     return(eResult);
 }
@@ -2006,7 +2013,7 @@ bool adi_ether_GemacGetLinkStatus(ADI_ETHER_HANDLE phDevice)
  */
 ADI_ETHER_RESULT adi_ether_GemacEnableMAC(ADI_ETHER_HANDLE phDevice)
 {
-	ADI_ETHER_RESULT eResult;
+    ADI_ETHER_RESULT eResult;
     ADI_EMAC_DEVICE*    const  pDev      = (ADI_EMAC_DEVICE*)phDevice;
     ADI_EMAC_REGISTERS* const  pEmacRegs = ((ADI_EMAC_DEVICE*)phDevice)->pEMAC_REGS;
     uint32_t            Status;
@@ -2027,22 +2034,22 @@ ADI_ETHER_RESULT adi_ether_GemacEnableMAC(ADI_ETHER_HANDLE phDevice)
     if (pDev->Capability & ADI_EMAC_CAPABILITY_RGMII)
     {
         /* Reset the phy */
-    	nPhyConfig.bResetOnly = true;
+        nPhyConfig.bResetOnly = true;
 
         if (pDev->pPhyDevice->init(pDev->pPhyDevice, phDevice, &nPhyConfig) != ADI_PHY_RESULT_SUCCESS)
         {
-        	return ADI_ETHER_RESULT_PHYINIT_FAILED;
+            return ADI_ETHER_RESULT_PHYINIT_FAILED;
         }
     }
 
     /* Initialize the DMA descriptors */
     if ((eResult = init_descriptor(phDevice, &pDev->Rx)) != ADI_ETHER_RESULT_SUCCESS)
     {
-    	return eResult;
+        return eResult;
     }
     if ((eResult = init_descriptor(phDevice, &pDev->Tx)) != ADI_ETHER_RESULT_SUCCESS)
     {
-    	return eResult;
+        return eResult;
     }
 
 
@@ -2097,20 +2104,20 @@ ADI_ETHER_RESULT adi_ether_GemacEnableMAC(ADI_ETHER_HANDLE phDevice)
      * - Early receive interrupt
      */
     nDMA_IEN = (1UL << BITP_EMAC_DMA_IEN_NIS) |
-    	 	   (1UL << BITP_EMAC_DMA_IEN_AIS) |
-    	 	   (1UL << BITP_EMAC_DMA_IEN_RU)  |
-    	 	   (1UL << BITP_EMAC_DMA_IEN_RI)  |
-    	 	   (1UL << BITP_EMAC_DMA_IEN_UNF) |
-    	 	   (1UL << BITP_EMAC_DMA_IEN_TU)  |
-    	 	   (1UL << BITP_EMAC_DMA_IEN_TI);
+               (1UL << BITP_EMAC_DMA_IEN_AIS) |
+               (1UL << BITP_EMAC_DMA_IEN_RU)  |
+               (1UL << BITP_EMAC_DMA_IEN_RI)  |
+               (1UL << BITP_EMAC_DMA_IEN_UNF) |
+               (1UL << BITP_EMAC_DMA_IEN_TU)  |
+               (1UL << BITP_EMAC_DMA_IEN_TI);
 
 #ifdef GEMAC_SUPPORT_EMAC1
     if((ADI_EMAC_DEVICE*)phDevice == &gEMAC1)
-    	nDMA_BUSMODE = EMAC_REG_CFG_BUSMODE;
+        nDMA_BUSMODE = EMAC_REG_CFG_BUSMODE;
     else
-    	nDMA_BUSMODE = GEMAC_REG_CFG_BUSMODE;
+        nDMA_BUSMODE = GEMAC_REG_CFG_BUSMODE;
 #else
-	nDMA_BUSMODE = GEMAC_REG_CFG_BUSMODE;
+    nDMA_BUSMODE = GEMAC_REG_CFG_BUSMODE;
 #endif
 
      gemac_set_dmabusmode(phDevice, 0, nDMA_BUSMODE);
@@ -2121,59 +2128,59 @@ ADI_ETHER_RESULT adi_ether_GemacEnableMAC(ADI_ETHER_HANDLE phDevice)
     {
          if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_AV_EN) {
 
-        	 pEmacRegs->EMAC_MAC_AVCTL = pDev->AVDevice.nAVMACCtlReg;
+             pEmacRegs->EMAC_MAC_AVCTL = pDev->AVDevice.nAVMACCtlReg;
 
-    		 if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_EN) {
-    			 gemac_set_dmabusmode(phDevice, 1, nDMA_BUSMODE);
-    			 pEmacRegs->EMAC_DMA1_IEN = nDMA_IEN;
+             if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_EN) {
+                 gemac_set_dmabusmode(phDevice, 1, nDMA_BUSMODE);
+                 pEmacRegs->EMAC_DMA1_IEN = nDMA_IEN;
 
-    			 if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_CBS_EN) {
-    				 pEmacRegs->EMAC_DMA1_CHCBSCTL = pDev->AVDevice.Chan1.nCBSCtlReg;
-    				 pEmacRegs->EMAC_DMA1_CHISC    = pDev->AVDevice.Chan1.nIdleSlopeReg;
-    				 pEmacRegs->EMAC_DMA1_CHSSC    = pDev->AVDevice.Chan1.nSendSlopeReg;
-    				 pEmacRegs->EMAC_DMA1_CHHIC    = pDev->AVDevice.Chan1.nHiCreditReg;
-    				 pEmacRegs->EMAC_DMA1_CHLOC    = pDev->AVDevice.Chan1.nLowCreditReg;
-    			 }
-    			 else
-    			 {
-    				 pEmacRegs->EMAC_DMA1_CHCBSCTL = BITM_EMAC_DMA1_CHCBSCTL_CBSD;
-    			 }
+                 if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_CBS_EN) {
+                     pEmacRegs->EMAC_DMA1_CHCBSCTL = pDev->AVDevice.Chan1.nCBSCtlReg;
+                     pEmacRegs->EMAC_DMA1_CHISC    = pDev->AVDevice.Chan1.nIdleSlopeReg;
+                     pEmacRegs->EMAC_DMA1_CHSSC    = pDev->AVDevice.Chan1.nSendSlopeReg;
+                     pEmacRegs->EMAC_DMA1_CHHIC    = pDev->AVDevice.Chan1.nHiCreditReg;
+                     pEmacRegs->EMAC_DMA1_CHLOC    = pDev->AVDevice.Chan1.nLowCreditReg;
+                 }
+                 else
+                 {
+                     pEmacRegs->EMAC_DMA1_CHCBSCTL = BITM_EMAC_DMA1_CHCBSCTL_CBSD;
+                 }
 
-    			 if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_SLOT_EN) {
-    				 pEmacRegs->EMAC_DMA1_CHSFCS   = pDev->AVDevice.Chan1.nSlotCtlStatReg;
-    			 }
-    		 }
+                 if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_SLOT_EN) {
+                     pEmacRegs->EMAC_DMA1_CHSFCS   = pDev->AVDevice.Chan1.nSlotCtlStatReg;
+                 }
+             }
 
-    		 if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_EN) {
-    			 gemac_set_dmabusmode(phDevice, 2, nDMA_BUSMODE);
-    			 pEmacRegs->EMAC_DMA2_IEN = nDMA_IEN;
+             if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_EN) {
+                 gemac_set_dmabusmode(phDevice, 2, nDMA_BUSMODE);
+                 pEmacRegs->EMAC_DMA2_IEN = nDMA_IEN;
 
-    			 if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_CBS_EN) {
-    				 pEmacRegs->EMAC_DMA2_CHCBSCTL = pDev->AVDevice.Chan2.nCBSCtlReg;
-    				 pEmacRegs->EMAC_DMA2_CHISC    = pDev->AVDevice.Chan2.nIdleSlopeReg;
-    				 pEmacRegs->EMAC_DMA2_CHSSC    = pDev->AVDevice.Chan2.nSendSlopeReg;
-    				 pEmacRegs->EMAC_DMA2_CHHIC    = pDev->AVDevice.Chan2.nHiCreditReg;
-    				 pEmacRegs->EMAC_DMA2_CHLOC    = pDev->AVDevice.Chan2.nLowCreditReg;
-    			 }
-    			 else
-    			 {
-    				 pEmacRegs->EMAC_DMA2_CHCBSCTL = BITM_EMAC_DMA2_CHCBSCTL_CBSD;
-    			 }
+                 if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_CBS_EN) {
+                     pEmacRegs->EMAC_DMA2_CHCBSCTL = pDev->AVDevice.Chan2.nCBSCtlReg;
+                     pEmacRegs->EMAC_DMA2_CHISC    = pDev->AVDevice.Chan2.nIdleSlopeReg;
+                     pEmacRegs->EMAC_DMA2_CHSSC    = pDev->AVDevice.Chan2.nSendSlopeReg;
+                     pEmacRegs->EMAC_DMA2_CHHIC    = pDev->AVDevice.Chan2.nHiCreditReg;
+                     pEmacRegs->EMAC_DMA2_CHLOC    = pDev->AVDevice.Chan2.nLowCreditReg;
+                 }
+                 else
+                 {
+                     pEmacRegs->EMAC_DMA2_CHCBSCTL = BITM_EMAC_DMA2_CHCBSCTL_CBSD;
+                 }
 
 
-    			 if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_SLOT_EN) {
-    				 pEmacRegs->EMAC_DMA2_CHSFCS   = pDev->AVDevice.Chan2.nSlotCtlStatReg;
-    			 }
+                 if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_SLOT_EN) {
+                     pEmacRegs->EMAC_DMA2_CHSFCS   = pDev->AVDevice.Chan2.nSlotCtlStatReg;
+                 }
 
-    		 }
+             }
          }
 
-         if (	(!(pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_AV_EN))
-        	 || (   (!(pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_RX_EN))
-        		 && (!(pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_RX_EN))
-        		 ))
+         if (   (!(pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_AV_EN))
+             || (   (!(pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_RX_EN))
+                 && (!(pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_RX_EN))
+                 ))
          {
-        	 pEmacRegs->EMAC_MAC_AVCTL = BITM_EMAC_MAC_AVCTL_AVCD;
+             pEmacRegs->EMAC_MAC_AVCTL = BITM_EMAC_MAC_AVCTL_AVCD;
          }
      }
 #endif
@@ -2193,10 +2200,10 @@ ADI_ETHER_RESULT adi_ether_GemacEnableMAC(ADI_ETHER_HANDLE phDevice)
      if (pDev->Capability & ADI_EMAC_CAPABILITY_AV)
      {
          if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_EN) {
-        	 gemac_set_dmaopmode(phDevice, 1u, nDMA_OPMODE);
+             gemac_set_dmaopmode(phDevice, 1u, nDMA_OPMODE);
          }
          if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_EN) {
-        	 gemac_set_dmaopmode(phDevice, 2u, nDMA_OPMODE);
+             gemac_set_dmaopmode(phDevice, 2u, nDMA_OPMODE);
          }
      }
 #endif
@@ -2209,13 +2216,13 @@ ADI_ETHER_RESULT adi_ether_GemacEnableMAC(ADI_ETHER_HANDLE phDevice)
 #ifdef ADI_ETHER_SUPPORT_AV
       if (pDev->Capability & ADI_EMAC_CAPABILITY_AV) {
           if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_EN) {
-        	  pEmacRegs->EMAC_DMA1_TXDSC_ADDR = (uint32_t)pDev->Tx.DMAChan[1].pDmaDescHead;
-        	  pEmacRegs->EMAC_DMA1_RXDSC_ADDR = (uint32_t)pDev->Rx.DMAChan[1].pDmaDescHead;
+              pEmacRegs->EMAC_DMA1_TXDSC_ADDR = (uint32_t)pDev->Tx.DMAChan[1].pDmaDescHead;
+              pEmacRegs->EMAC_DMA1_RXDSC_ADDR = (uint32_t)pDev->Rx.DMAChan[1].pDmaDescHead;
           }
 
           if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_EN) {
-        	  pEmacRegs->EMAC_DMA2_TXDSC_ADDR = (uint32_t)pDev->Tx.DMAChan[2].pDmaDescHead;
-        	  pEmacRegs->EMAC_DMA2_RXDSC_ADDR = (uint32_t)pDev->Rx.DMAChan[2].pDmaDescHead;
+              pEmacRegs->EMAC_DMA2_TXDSC_ADDR = (uint32_t)pDev->Tx.DMAChan[2].pDmaDescHead;
+              pEmacRegs->EMAC_DMA2_RXDSC_ADDR = (uint32_t)pDev->Rx.DMAChan[2].pDmaDescHead;
           }
       }
 #endif
@@ -2235,20 +2242,20 @@ ADI_ETHER_RESULT adi_ether_GemacEnableMAC(ADI_ETHER_HANDLE phDevice)
       else
       {
           nPhyConfig.nConfig |= (pDev->nPhyConfig & ADI_GEMAC_PHY_CFG_FULL_DUPLEX_EN)
-        									? ADI_PHY_CFG_FULL_DUPLEX_EN : 0u;
+                                            ? ADI_PHY_CFG_FULL_DUPLEX_EN : 0u;
 
           if (pDev->nPhyConfig & ADI_GEMAC_PHY_CFG_10Mbps_EN) {
-        	  nPhyConfig.nConfig |= ADI_PHY_CFG_10Mbps_EN;
+              nPhyConfig.nConfig |= ADI_PHY_CFG_10Mbps_EN;
           } else if (pDev->nPhyConfig & ADI_GEMAC_PHY_CFG_100Mbps_EN) {
-        	  nPhyConfig.nConfig |= ADI_PHY_CFG_100Mbps_EN;
+              nPhyConfig.nConfig |= ADI_PHY_CFG_100Mbps_EN;
           } else {
-        	  nPhyConfig.nConfig |= ADI_PHY_CFG_1000Mbps_EN;
+              nPhyConfig.nConfig |= ADI_PHY_CFG_1000Mbps_EN;
           }
       }
 
       if (pDev->pPhyDevice->init(pDev->pPhyDevice, phDevice, &nPhyConfig) != ADI_PHY_RESULT_SUCCESS)
       {
-    	  return ADI_ETHER_RESULT_PHYINIT_FAILED;
+          return ADI_ETHER_RESULT_PHYINIT_FAILED;
       }
 
       ENTER_CRITICAL_REGION();
@@ -2268,37 +2275,37 @@ ADI_ETHER_RESULT adi_ether_GemacEnableMAC(ADI_ETHER_HANDLE phDevice)
           /* IF (DMA1 is enabled) */
           if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_EN) {
 
-        	  if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_RX_EN) {
-        		  /* activate rx channel (DMA 1) */
-        		  bind_buf_with_desc(phDevice,&pDev->Rx, 1);
-        		  activate_channel(pDev,&pDev->Rx, 1);
-        		  enable_rx(pDev, 1);
-        	  }
+              if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_RX_EN) {
+                  /* activate rx channel (DMA 1) */
+                  bind_buf_with_desc(phDevice,&pDev->Rx, 1);
+                  activate_channel(pDev,&pDev->Rx, 1);
+                  enable_rx(pDev, 1);
+              }
 
-        	  if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_TX_EN) {
-        		  /* activate tx channel (DMA 1) */
-        		  bind_buf_with_desc(phDevice,&pDev->Tx, 1);
-        		  activate_channel(pDev,&pDev->Tx, 1);
-        		  enable_tx(pDev, 1);
-        	  }
+              if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_TX_EN) {
+                  /* activate tx channel (DMA 1) */
+                  bind_buf_with_desc(phDevice,&pDev->Tx, 1);
+                  activate_channel(pDev,&pDev->Tx, 1);
+                  enable_tx(pDev, 1);
+              }
           }
 
           /* IF (DMA2 is enabled) */
           if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_EN) {
 
-        	  if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_RX_EN) {
-        		  /* activate rx channel (DMA 2) */
-        		  bind_buf_with_desc(phDevice,&pDev->Rx, 2);
-        		  activate_channel(pDev,&pDev->Rx, 2);
-        		  enable_rx(pDev, 2);
-        	  }
+              if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_RX_EN) {
+                  /* activate rx channel (DMA 2) */
+                  bind_buf_with_desc(phDevice,&pDev->Rx, 2);
+                  activate_channel(pDev,&pDev->Rx, 2);
+                  enable_rx(pDev, 2);
+              }
 
-        	  if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_TX_EN) {
-    			  /* activate tx channel (DMA 1) */
-    			  bind_buf_with_desc(phDevice,&pDev->Tx, 2);
-    			  activate_channel(pDev,&pDev->Tx, 2);
-    			  enable_tx(pDev, 2);
-        	  }
+              if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_TX_EN) {
+                  /* activate tx channel (DMA 1) */
+                  bind_buf_with_desc(phDevice,&pDev->Tx, 2);
+                  activate_channel(pDev,&pDev->Tx, 2);
+                  enable_tx(pDev, 2);
+              }
 
           }
       }
@@ -2437,9 +2444,9 @@ ADI_ETHER_RESULT adi_ether_GemacSetMACAddress(ADI_ETHER_HANDLE phDevice, const u
  * @brief       Manage the Module IO Operations
  *
  * @details     The ethernet drivers can have additional modules like PTP, AV etc depending upon the
- * 			    capabilities of the underlying controller. adi_ether_GemacModuleIO is responsible for managing
- * 			    the IO with those modules. The function passes the arguments to the functions corresponding to
- * 			    managing the modules.
+ *              capabilities of the underlying controller. adi_ether_GemacModuleIO is responsible for managing
+ *              the IO with those modules. The function passes the arguments to the functions corresponding to
+ *              managing the modules.
  *
  * @param [in]  phDevice        Handle to the ethernet device
  *
@@ -2460,15 +2467,15 @@ ADI_ETHER_RESULT adi_ether_GemacSetMACAddress(ADI_ETHER_HANDLE phDevice, const u
  */
 
 ADI_ETHER_RESULT adi_ether_GemacModuleIO (
-										  ADI_ETHER_HANDLE      const phDevice,
-										  ADI_ETHER_MODULE      const ModuleID,
-										  ADI_ETHER_MODULE_FUNC const Func,
-										  void*                       arg0,
-										  void*                       arg1,
-										  void*                       arg2
-        								  )
+                                          ADI_ETHER_HANDLE      const phDevice,
+                                          ADI_ETHER_MODULE      const ModuleID,
+                                          ADI_ETHER_MODULE_FUNC const Func,
+                                          void*                       arg0,
+                                          void*                       arg1,
+                                          void*                       arg2
+                                          )
 {
-	ADI_ETHER_RESULT eResult     = ADI_ETHER_RESULT_NOT_SUPPORTED;
+    ADI_ETHER_RESULT eResult     = ADI_ETHER_RESULT_NOT_SUPPORTED;
 #ifdef ADI_ETHER_SUPPORT_AV
     ADI_EMAC_DEVICE* const  pDev = (ADI_EMAC_DEVICE*)phDevice;
 #endif
@@ -2477,30 +2484,30 @@ ADI_ETHER_RESULT adi_ether_GemacModuleIO (
     {
     case ADI_ETHER_MODULE_PTP:
 #ifdef ADI_ETHER_SUPPORT_PTP
-    	eResult = gemac_PTPModuleIO(pDev, Func, arg0, arg1, arg2);
+        eResult = gemac_PTPModuleIO(pDev, Func, arg0, arg1, arg2);
 #endif
-    	break;
+        break;
 
     case ADI_ETHER_MODULE_PPS:
 #ifdef ADI_ETHER_SUPPORT_PPS
-    	eResult = gemac_PPS_AlarmModuleIO(pDev, Func, arg0, arg1, arg2);
+        eResult = gemac_PPS_AlarmModuleIO(pDev, Func, arg0, arg1, arg2);
 #endif
-    	break;
+        break;
 
     case ADI_ETHER_MODULE_ALARM:
 #ifdef ADI_ETHER_SUPPORT_ALARM
-    	eResult = gemac_PPS_AlarmModuleIO(pDev, Func, arg0, arg1, arg2);
+        eResult = gemac_PPS_AlarmModuleIO(pDev, Func, arg0, arg1, arg2);
 #endif
-    	break;
+        break;
 
     case ADI_ETHER_MODULE_AV:
 #ifdef ADI_ETHER_SUPPORT_AV
-    	eResult = gemac_AV_ModuleIO(pDev, Func, arg0, arg1, arg2);
+        eResult = gemac_AV_ModuleIO(pDev, Func, arg0, arg1, arg2);
 #endif
-    	break;
+        break;
 
     default:
-    	eResult = ADI_ETHER_RESULT_NOT_SUPPORTED;
+        eResult = ADI_ETHER_RESULT_NOT_SUPPORTED;
         break;
     }
 
@@ -2510,11 +2517,11 @@ ADI_ETHER_RESULT adi_ether_GemacModuleIO (
 
 
 static ADI_ETHER_RESULT init_descriptor_memory (
-												ADI_ETHER_HANDLE phDevice,
-												const uint8_t *pMemory,
-												const uint32_t Length,
-												ADI_EMAC_CHANNEL *pChannel
-												)
+                                                ADI_ETHER_HANDLE phDevice,
+                                                const uint8_t *pMemory,
+                                                const uint32_t Length,
+                                                ADI_EMAC_CHANNEL *pChannel
+                                                )
 {
     uint8_t *pCurBase,*pOriginalBase;
     int32_t ActualLength;
@@ -2537,19 +2544,19 @@ static ADI_ETHER_RESULT init_descriptor_memory (
 }
 
 static ADI_ETHER_RESULT init_descriptor (
-										 ADI_ETHER_HANDLE phDevice,
-										 ADI_EMAC_CHANNEL *pChannel
-										 )
+                                         ADI_ETHER_HANDLE phDevice,
+                                         ADI_EMAC_CHANNEL *pChannel
+                                         )
 {
 #ifdef ADI_ETHER_SUPPORT_AV
-	ADI_EMAC_DEVICE* const  pDev = (ADI_EMAC_DEVICE*)phDevice;
+    ADI_EMAC_DEVICE* const  pDev = (ADI_EMAC_DEVICE*)phDevice;
 #endif
-	ADI_EMAC_DMADESC *pDMADescPool;
-	int32_t nTotalNumDMADesc;
-	uint32_t i;
+    ADI_EMAC_DMADESC *pDMADescPool;
+    int32_t nTotalNumDMADesc;
+    uint32_t i;
 
 
-	/* Check the assumptions made in the code */
+    /* Check the assumptions made in the code */
 #ifdef ADI_DEBUG
 #ifdef _MISRA_RULES
 #pragma diag(push)
@@ -2563,7 +2570,7 @@ static ADI_ETHER_RESULT init_descriptor (
 
 #endif
 
-	/* Set the start of the DMA Desc Pool */
+    /* Set the start of the DMA Desc Pool */
     pDMADescPool = (ADI_EMAC_DMADESC*) pChannel->pDMADescMem;
     nTotalNumDMADesc = pChannel->nDMADescNum;
 
@@ -2571,11 +2578,11 @@ static ADI_ETHER_RESULT init_descriptor (
     memset(pDMADescPool, 0, sizeof(ADI_EMAC_DMADESC) * pChannel->nDMADescNum);
 
     /* Link all the DMA descriptors */
-	for (i = 0; i < (pChannel->nDMADescNum - 1); i++)
-	{
-		pDMADescPool[i].pNextDesc = &pDMADescPool[i+1];
-	}
-	pDMADescPool[pChannel->nDMADescNum - 1].pNextDesc = NULL;
+    for (i = 0; i < (pChannel->nDMADescNum - 1); i++)
+    {
+        pDMADescPool[i].pNextDesc = &pDMADescPool[i+1];
+    }
+    pDMADescPool[pChannel->nDMADescNum - 1].pNextDesc = NULL;
 
 #ifdef ADI_ETHER_SUPPORT_AV
     if (pDev->Capability & ADI_EMAC_CAPABILITY_AV)
@@ -2583,52 +2590,52 @@ static ADI_ETHER_RESULT init_descriptor (
         /* IF (DMA2 is enabled) */
         if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_EN)
         {
-        	uint32_t nDMAChannel = 2;
-        	uint32_t nNumDesc = (pChannel->Recv)
-        							?  pDev->AVDevice.Chan2.Rx.NumReservedDesc
-        							 : pDev->AVDevice.Chan2.Tx.NumReservedDesc;
+            uint32_t nDMAChannel = 2;
+            uint32_t nNumDesc = (pChannel->Recv)
+                                    ?  pDev->AVDevice.Chan2.Rx.NumReservedDesc
+                                     : pDev->AVDevice.Chan2.Tx.NumReservedDesc;
 
-        	if (nNumDesc > 0) {
-    			pChannel->DMAChan[nDMAChannel].pDmaDescHead = pDMADescPool;
-    			pChannel->DMAChan[nDMAChannel].pDmaDescTail = &pDMADescPool[nNumDesc - 1];
-    			pChannel->DMAChan[nDMAChannel].pDmaDescTail->pNextDesc = NULL;
-    			pChannel->DMAChan[nDMAChannel].NumAvailDmaDesc = nNumDesc;
+            if (nNumDesc > 0) {
+                pChannel->DMAChan[nDMAChannel].pDmaDescHead = pDMADescPool;
+                pChannel->DMAChan[nDMAChannel].pDmaDescTail = &pDMADescPool[nNumDesc - 1];
+                pChannel->DMAChan[nDMAChannel].pDmaDescTail->pNextDesc = NULL;
+                pChannel->DMAChan[nDMAChannel].NumAvailDmaDesc = nNumDesc;
 
-    			pDMADescPool = &pDMADescPool[nNumDesc];
-    			nTotalNumDMADesc = nTotalNumDMADesc - nNumDesc;
-        	}
+                pDMADescPool = &pDMADescPool[nNumDesc];
+                nTotalNumDMADesc = nTotalNumDMADesc - nNumDesc;
+            }
         }
 
         /* IF (DMA1 is enabled) */
         if (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_EN)
         {
-        	uint32_t nDMAChannel = 1;
-        	uint32_t nNumDesc = (pChannel->Recv)
-        	    							?  pDev->AVDevice.Chan1.Rx.NumReservedDesc
-        	    							 : pDev->AVDevice.Chan1.Tx.NumReservedDesc;
+            uint32_t nDMAChannel = 1;
+            uint32_t nNumDesc = (pChannel->Recv)
+                                            ?  pDev->AVDevice.Chan1.Rx.NumReservedDesc
+                                             : pDev->AVDevice.Chan1.Tx.NumReservedDesc;
 
-        	if (nNumDesc > 0) {
-    			pChannel->DMAChan[nDMAChannel].pDmaDescHead = pDMADescPool;
-    			pChannel->DMAChan[nDMAChannel].pDmaDescTail = &pDMADescPool[nNumDesc - 1];
-    			pChannel->DMAChan[nDMAChannel].pDmaDescTail->pNextDesc = NULL;
-    			pChannel->DMAChan[nDMAChannel].NumAvailDmaDesc = nNumDesc;
+            if (nNumDesc > 0) {
+                pChannel->DMAChan[nDMAChannel].pDmaDescHead = pDMADescPool;
+                pChannel->DMAChan[nDMAChannel].pDmaDescTail = &pDMADescPool[nNumDesc - 1];
+                pChannel->DMAChan[nDMAChannel].pDmaDescTail->pNextDesc = NULL;
+                pChannel->DMAChan[nDMAChannel].NumAvailDmaDesc = nNumDesc;
 
-    			pDMADescPool = &pDMADescPool[nNumDesc];
-    			nTotalNumDMADesc = nTotalNumDMADesc - nNumDesc;
-        	}
+                pDMADescPool = &pDMADescPool[nNumDesc];
+                nTotalNumDMADesc = nTotalNumDMADesc - nNumDesc;
+            }
         }
     }
 #endif
 
     /* Set the rest of descriptors for DMA0 */
     {
-    	uint32_t nNumDesc = nTotalNumDMADesc;
-    	uint32_t nDMAChannel = 0;
+        uint32_t nNumDesc = nTotalNumDMADesc;
+        uint32_t nDMAChannel = 0;
 
-    	pChannel->DMAChan[nDMAChannel].pDmaDescHead = pDMADescPool;
-    	pChannel->DMAChan[nDMAChannel].pDmaDescTail = &pDMADescPool[nNumDesc - 1];
-    	pChannel->DMAChan[nDMAChannel].pDmaDescTail->pNextDesc = NULL;
-    	pChannel->DMAChan[nDMAChannel].NumAvailDmaDesc = nNumDesc;
+        pChannel->DMAChan[nDMAChannel].pDmaDescHead = pDMADescPool;
+        pChannel->DMAChan[nDMAChannel].pDmaDescTail = &pDMADescPool[nNumDesc - 1];
+        pChannel->DMAChan[nDMAChannel].pDmaDescTail->pNextDesc = NULL;
+        pChannel->DMAChan[nDMAChannel].NumAvailDmaDesc = nNumDesc;
     }
 
     return (ADI_ETHER_RESULT_SUCCESS);
@@ -2685,12 +2692,12 @@ static ADI_ETHER_RESULT insert_queue(ADI_EMAC_FRAME_Q *pQueue, ADI_ETHER_BUFFER 
  * @note        used by bind_buf_with_desc()
  */
 static void  set_descriptor(
-							ADI_ETHER_HANDLE hDevice,
-                     	 	ADI_EMAC_DMADESC *pDmaDesc,
-                     	 	ADI_ETHER_BUFFER *pBindedBuf,
-                     	 	ADI_EMAC_CHANNEL *pChannel,
-                     	 	uint32_t          nDMADeviceNum
-                     	 	)
+                            ADI_ETHER_HANDLE hDevice,
+                            ADI_EMAC_DMADESC *pDmaDesc,
+                            ADI_ETHER_BUFFER *pBindedBuf,
+                            ADI_EMAC_CHANNEL *pChannel,
+                            uint32_t          nDMADeviceNum
+                            )
 {
     ADI_EMAC_DEVICE*    const  pDev = (ADI_EMAC_DEVICE*)hDevice;
 
@@ -2716,17 +2723,17 @@ static void  set_descriptor(
         pDmaDesc->StartAddr   = (uint32_t)((uint8_t*)pBindedBuf->Data+2);
         pDmaDesc->ControlDesc -= 2;
         pDmaDesc->Status |= ( (1UL << 30)     /* Interrupt on Completion */
-        					 | (1UL << 29)    /* Last Segment */
-        					 | (1UL << 28)    /* First Segment */
-        					 | (1UL << 20)    /* Second Address Chained */
+                             | (1UL << 29)    /* Last Segment */
+                             | (1UL << 28)    /* First Segment */
+                             | (1UL << 20)    /* Second Address Chained */
                              | (3UL << 22)    /* Hardware checksum calculation */
-        					 );
+                             );
 
 #ifdef ADI_ETHER_SUPPORT_PTP
         if (pDev->Capability & ADI_EMAC_CAPABILITY_PTP) {
             /* Timestamp is enabled for the TX packet */
             if (pBindedBuf->Flag & ADI_ETHER_BUFFER_FLAG_TX_TIMESTAMP_EN) {
-        	       pDmaDesc->Status |= (1UL << 25);  /* Transmit Timestamp Enable */
+                   pDmaDesc->Status |= (1UL << 25);  /* Transmit Timestamp Enable */
                }
         }
 #endif
@@ -2734,11 +2741,11 @@ static void  set_descriptor(
 #ifdef ADI_ETHER_SUPPORT_AV
         if (pDev->Capability & ADI_EMAC_CAPABILITY_PTP) {
             if (
-            		((nDMADeviceNum == 1) && (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_SLOT_EN))
-            	||  ((nDMADeviceNum == 2) && (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_SLOT_EN))
-            	)
+                    ((nDMADeviceNum == 1) && (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA1_SLOT_EN))
+                ||  ((nDMADeviceNum == 2) && (pDev->AVDevice.config & ADI_EMAC_AV_CONFIG_DMA2_SLOT_EN))
+                )
             {
-            	pDmaDesc->Status |= ((pBindedBuf->nSlot & 0x000Fu) << 3);
+                pDmaDesc->Status |= ((pBindedBuf->nSlot & 0x000Fu) << 3);
             }
         }
 #endif
@@ -2772,7 +2779,7 @@ static void  set_descriptor(
  */
 static ADI_ETHER_RESULT bind_buf_with_desc(ADI_ETHER_HANDLE hDevice,ADI_EMAC_CHANNEL *pChannel, int32_t nDMADeviceNum)
 {
-	ADI_EMAC_DMADESC *pAvailDesc;
+    ADI_EMAC_DMADESC *pAvailDesc;
     ADI_ETHER_BUFFER *pQueuedBuf;
     ADI_EMAC_DMA_CHANNEL* pDMAChannel = &pChannel->DMAChan[nDMADeviceNum];
 
@@ -2872,67 +2879,67 @@ static ADI_ETHER_RESULT activate_channel(ADI_ETHER_HANDLE hDevice,ADI_EMAC_CHANN
     /* check if there are any buffers in the active list */
     if ((pDMAChannel->Active.pQueueHead == NULL) ||  (pDMAChannel->Active.ElementCount >= ADI_EMAC_THRESHOLD ))
     {
-    	if (pDMAChannel->Active.pQueueHead == NULL) {
-    		copy_queue_elements(&pDMAChannel->Active, &pDMAChannel->Pending);
+        if (pDMAChannel->Active.pQueueHead == NULL) {
+            copy_queue_elements(&pDMAChannel->Active, &pDMAChannel->Pending);
 
-    		pNextDmaDesc = ((ADI_EMAC_BUFINFO*)pDMAChannel->Active.pQueueHead)->pDmaDesc;
-    		pLastDmaDesc = ((ADI_EMAC_BUFINFO*)pDMAChannel->Active.pQueueTail)->pDmaDesc;
-    		if(pChannel->Recv) {
-    			if ((pEmacRegs->EMAC_DMA_STAT & BITM_EMAC_DMA_STAT_RS) == ENUM_EMAC_DMA_STAT_RS_STOPPED)
-    			{
-    				pEmacRegs->EMAC_DMA_RXDSC_ADDR = (uint32_t)pNextDmaDesc;
-    			}
-    		} else {
+            pNextDmaDesc = ((ADI_EMAC_BUFINFO*)pDMAChannel->Active.pQueueHead)->pDmaDesc;
+            pLastDmaDesc = ((ADI_EMAC_BUFINFO*)pDMAChannel->Active.pQueueTail)->pDmaDesc;
+            if(pChannel->Recv) {
+                if ((pEmacRegs->EMAC_DMA_STAT & BITM_EMAC_DMA_STAT_RS) == ENUM_EMAC_DMA_STAT_RS_STOPPED)
+                {
+                    pEmacRegs->EMAC_DMA_RXDSC_ADDR = (uint32_t)pNextDmaDesc;
+                }
+            } else {
                 if ((pEmacRegs->EMAC_DMA_STAT & BITM_EMAC_DMA_STAT_TS) == ENUM_EMAC_DMA_STAT_TS_STOPPED)
                 {
                     pEmacRegs->EMAC_DMA_TXDSC_ADDR = (uint32_t)pNextDmaDesc;
                 }
-    		}
-    	} else {
-			 pActiveQLastBuf = pDMAChannel->Active.pQueueTail;
-			 pPendQFirstBuf  = pDMAChannel->Pending.pQueueHead;
+            }
+        } else {
+             pActiveQLastBuf = pDMAChannel->Active.pQueueTail;
+             pPendQFirstBuf  = pDMAChannel->Pending.pQueueHead;
 
-			 pLastDmaDesc = ((ADI_EMAC_BUFINFO*)pActiveQLastBuf)->pDmaDesc;
-			 pNextDmaDesc = ((ADI_EMAC_BUFINFO*)pPendQFirstBuf)->pDmaDesc;
+             pLastDmaDesc = ((ADI_EMAC_BUFINFO*)pActiveQLastBuf)->pDmaDesc;
+             pNextDmaDesc = ((ADI_EMAC_BUFINFO*)pPendQFirstBuf)->pDmaDesc;
 
-			 /* now link the descriptors */
-			 pLastDmaDesc->pNextDesc = pNextDmaDesc;
+             /* now link the descriptors */
+             pLastDmaDesc->pNextDesc = pNextDmaDesc;
 
-			 if(pDev->Cache) { SIMPLEFLUSHINV(pLastDmaDesc); }
+             if(pDev->Cache) { SIMPLEFLUSHINV(pLastDmaDesc); }
 
-			 /* link the buffers */
-			 pActiveQLastBuf->pNext = pPendQFirstBuf;
-			 pDMAChannel->Active.pQueueTail = pDMAChannel->Pending.pQueueTail;
-			 pDMAChannel->Active.ElementCount += pDMAChannel->Pending.ElementCount;
-    	}
+             /* link the buffers */
+             pActiveQLastBuf->pNext = pPendQFirstBuf;
+             pDMAChannel->Active.pQueueTail = pDMAChannel->Pending.pQueueTail;
+             pDMAChannel->Active.ElementCount += pDMAChannel->Pending.ElementCount;
+        }
 
 
-    	/* Set the OWN bit of DMA descriptor of the attached buffers */
-    	index = 0;
-    	pBuffer = pDMAChannel->Pending.pQueueHead;
-    	while(pBuffer) {
-    		pDmaDesc = ((ADI_EMAC_BUFINFO*)pBuffer)->pDmaDesc;
-    		if (((index++ % pDev->TxIntPeriod) != 0) && (pBuffer->pNext != NULL)) {
-    			/* Clear interrupt status */
-    			pDmaDesc->Status &= (~(1u << 30));
-    		}
+        /* Set the OWN bit of DMA descriptor of the attached buffers */
+        index = 0;
+        pBuffer = pDMAChannel->Pending.pQueueHead;
+        while(pBuffer) {
+            pDmaDesc = ((ADI_EMAC_BUFINFO*)pBuffer)->pDmaDesc;
+            if (((index++ % pDev->TxIntPeriod) != 0) && (pBuffer->pNext != NULL)) {
+                /* Clear interrupt status */
+                pDmaDesc->Status &= (~(1u << 30));
+            }
 
-    	    pDmaDesc->Status     |= ADI_EMAC_DMAOWN;
-    	    if(pDev->Cache) { SIMPLEFLUSHINV(pDmaDesc); }
+            pDmaDesc->Status     |= ADI_EMAC_DMAOWN;
+            if(pDev->Cache) { SIMPLEFLUSHINV(pDmaDesc); }
 
-    		pBuffer = pBuffer->pNext;
-    	}
+            pBuffer = pBuffer->pNext;
+        }
 
-  	    /* adjust the last descriptor */
-		reset_queue(&pDMAChannel->Pending);
+        /* adjust the last descriptor */
+        reset_queue(&pDMAChannel->Pending);
     }
 
 
-	if(pChannel->Recv) {
-	   resume_rx(hDevice, nDMADeviceNum);
-	} else {
-	   resume_tx(hDevice, nDMADeviceNum);
-	}
+    if(pChannel->Recv) {
+       resume_rx(hDevice, nDMADeviceNum);
+    } else {
+       resume_tx(hDevice, nDMADeviceNum);
+    }
 
     EXIT_CRITICAL_REGION();
 

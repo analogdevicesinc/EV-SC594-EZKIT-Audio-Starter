@@ -20,6 +20,10 @@ ssize_t getline(char **buf, size_t *bufsiz, FILE *fp);
 #define KILO_FREE    umm_free
 #define KILO_REALLOC umm_realloc
 
+#include "util.h"
+#define KILO_TIME       util_time
+
+/* These must be defined */
 #define KILO_TERM_WRITE shell_edit_write
 #define KILO_TERM_READ  shell_edit_read
 

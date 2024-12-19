@@ -110,7 +110,8 @@ MEMORY
   /* #### ARM L3 Memory ################################################## */
 
   /* ARM Core 0 L3, DMC0 */
-  MEM_L3 : ORIGIN = 0xA0000000, LENGTH = 512M
+  MEM_L3 : ORIGIN = 0xA0000000, LENGTH = 256M
+  MEM_L3_UNCACHED : ORIGIN = 0xB0000000, LENGTH = 256M
 
 }
 
@@ -132,7 +133,7 @@ SECTIONS {
 }
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm",
-	      "elf32-littlearm")
+          "elf32-littlearm")
 OUTPUT_ARCH(arm)
 ENTRY(_start)
 /* Do we need any of these for elf?
@@ -140,15 +141,15 @@ ENTRY(_start)
 SECTIONS
 {
   /* Read-only sections, merged into text segment: */
-  .interp     : { *(.interp) 	}
-  .hash          : { *(.hash)		}
-  .dynsym        : { *(.dynsym)		}
-  .dynstr        : { *(.dynstr)		}
-  .gnu.version   : { *(.gnu.version)	}
-  .gnu.version_d   : { *(.gnu.version_d)	}
-  .gnu.version_r   : { *(.gnu.version_r)	}
-  .rel.init      : { *(.rel.init)	}
-  .rela.init     : { *(.rela.init)	}
+  .interp     : { *(.interp)    }
+  .hash          : { *(.hash)       }
+  .dynsym        : { *(.dynsym)     }
+  .dynstr        : { *(.dynstr)     }
+  .gnu.version   : { *(.gnu.version)    }
+  .gnu.version_d   : { *(.gnu.version_d)    }
+  .gnu.version_r   : { *(.gnu.version_r)    }
+  .rel.init      : { *(.rel.init)   }
+  .rela.init     : { *(.rela.init)  }
   .rel.text      :
     {
       *(.rel.text)
@@ -161,8 +162,8 @@ SECTIONS
       *(.rela.text.*)
       *(.rela.gnu.linkonce.t*)
     }
-  .rel.fini      : { *(.rel.fini)	}
-  .rela.fini     : { *(.rela.fini)	}
+  .rel.fini      : { *(.rel.fini)   }
+  .rela.fini     : { *(.rela.fini)  }
   .rel.rodata    :
     {
       *(.rel.rodata)
@@ -187,12 +188,12 @@ SECTIONS
       *(.rela.data.*)
       *(.rela.gnu.linkonce.d*)
     }
-  .rel.ctors     : { *(.rel.ctors)	}
-  .rela.ctors    : { *(.rela.ctors)	}
-  .rel.dtors     : { *(.rel.dtors)	}
-  .rela.dtors    : { *(.rela.dtors)	}
-  .rel.got       : { *(.rel.got)		}
-  .rela.got      : { *(.rela.got)		}
+  .rel.ctors     : { *(.rel.ctors)  }
+  .rela.ctors    : { *(.rela.ctors) }
+  .rel.dtors     : { *(.rel.dtors)  }
+  .rela.dtors    : { *(.rela.dtors) }
+  .rel.got       : { *(.rel.got)        }
+  .rela.got      : { *(.rela.got)       }
   .rel.sdata     :
     {
       *(.rel.sdata)
@@ -205,13 +206,13 @@ SECTIONS
       *(.rela.sdata.*)
       *(.rela.gnu.linkonce.s*)
     }
-  .rel.sbss      : { *(.rel.sbss)		}
-  .rela.sbss     : { *(.rela.sbss)	}
-  .rel.bss       : { *(.rel.bss)		}
-  .rela.bss      : { *(.rela.bss)		}
-  .rel.plt       : { *(.rel.plt)		}
-  .rela.plt      : { *(.rela.plt)		}
-  .plt      : { *(.plt)	}
+  .rel.sbss      : { *(.rel.sbss)       }
+  .rela.sbss     : { *(.rela.sbss)  }
+  .rel.bss       : { *(.rel.bss)        }
+  .rela.bss      : { *(.rela.bss)       }
+  .rel.plt       : { *(.rel.plt)        }
+  .rela.plt      : { *(.rela.plt)       }
+  .plt      : { *(.plt) }
   /* L2 uncached section:
   ** Place any objects required to be uncached. */
   .l2_uncached :
@@ -303,7 +304,7 @@ SECTIONS
      core.  */
   .mcapi_data_icc   :
   {
-    *(.mcapi_data_icc)  
+    *(.mcapi_data_icc)
   } >MEM_L2_MCAPI_DATA_ICC
 
   .mcapi_data_core0   :
@@ -321,8 +322,8 @@ SECTIONS
     *(.gnu.linkonce.t*)
     *(.glue_7t) *(.glue_7)
   } >MEM_L3 =0
-  .init          : 
-  { 
+  .init          :
+  {
     KEEP (*(.init))
   } >MEM_L3 =0
   _etext = .;
@@ -373,7 +374,7 @@ SECTIONS
     KEEP (*(SORT(.fini_array.*)))
     PROVIDE_HIDDEN (__fini_array_end = .);
   } >MEM_L3 =0
-  .ctors   : 
+  .ctors   :
   {
     /* gcc uses crtbegin.o to find the start of
        the constructors, so we make sure it is
@@ -406,9 +407,9 @@ SECTIONS
   /* We want the small data sections together, so single-instruction offsets
      can access them all, and initialized data all before uninitialized, so
      we can shorten the on-disk segment size.  */
-  .sdata     : 
+  .sdata     :
   {
-    *(.sdata) 
+    *(.sdata)
     *(.sdata.*)
     *(.gnu.linkonce.s.*)
   } >MEM_L3 =0
@@ -461,4 +462,14 @@ SECTIONS
   .debug_funcnames 0 : { *(.debug_funcnames) }
   .debug_typenames 0 : { *(.debug_typenames) }
   .debug_varnames  0 : { *(.debug_varnames) }
+}
+
+SECTIONS {
+ .l3_uncached :
+  {
+    *(.l3_uncached_code)
+    *(.l3_uncached_data)
+    *(.l3_uncached_bss)
+    *(.usb_lib_uncached)
+  } >MEM_L3_UNCACHED = 0
 }

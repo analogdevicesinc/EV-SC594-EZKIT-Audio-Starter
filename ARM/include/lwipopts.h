@@ -19,6 +19,9 @@
 /* Task config */
 #include "task_cfg.h"
 
+/* UMM malloc */
+#include "umm_malloc.h"
+
 /* Thread defines */
 #define TCPIP_MBOX_SIZE                 128
 #define DEFAULT_THREAD_STACKSIZE        (ETHERNET_TASK_STACK_SIZE)
@@ -50,8 +53,8 @@
 
 /* Heap configs */
 #define MEM_LIBC_MALLOC                 1
-#define mem_clib_malloc                 pvPortMalloc
-#define mem_clib_free                   vPortFree
+#define mem_clib_malloc                 umm_malloc
+#define mem_clib_free                   umm_free
 #define MEMP_MEM_MALLOC                 1
 
 /* Misc configs */
@@ -82,10 +85,20 @@
 
 // Ethernet 32-bit alignment
 
+#if defined(__ADSPSC598_FAMILY__)
+#define ETH_PAD_SIZE                    0
+#else
 #define ETH_PAD_SIZE                    2
+#endif
 
 /* TFTP options */
 #define TFTP_MAX_FILENAME_LEN           30
+
+/* mDNS options */
+#define LWIP_MDNS_RESPONDER             1
+#define LWIP_IGMP                       1
+#define MEMP_NUM_UDP_PCB                10
+#define LWIP_NUM_NETIF_CLIENT_DATA      5
 
 /* Debug options */
 #define LWIP_PLATFORM_DIAG(x)

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
  * This software is proprietary and confidential to Analog Devices, Inc.
  * and its licensors.
  *
@@ -10,12 +10,11 @@
  */
 
 /* Standard includes. */
-#include <assert.h>
-
-#define DO_CYCLE_COUNTS
+#include <stdint.h>
 
 /* CCES includes */
 #include <services/int/adi_sec.h>
+#define DO_CYCLE_COUNTS
 #include <cycle_count.h>
 
 /* Simple service includes */
@@ -25,102 +24,71 @@
 #include "ipc.h"
 
 SAE_CONTEXT *saeContext = NULL;
+IPC_MSG_AUDIO *streamInfo[IPC_STREAM_ID_MAX];
 SAE_MSG_BUFFER *cyclesMsg = NULL;
 
-IPC_MSG_ROUTING *routeInfo = NULL;
-IPC_MSG_AUDIO *streamInfo[IPC_STREAM_ID_MAX];
+/***********************************************************************
+ * Audio functions
+ **********************************************************************/
 
+/*
+ * In these functions, IN and OUT are relative to the SHARC.  This
+ * code uses src and sink to help minimize confusion.  In all cases,
+ * src buffers are copied to sink buffers.
+ */
 #pragma optimize_for_speed
-static void routeAudio(uint8_t clockDomain)
+static void processAudio(IPC_MSG_PROCESS_AUDIO *process)
 {
-    ROUTE_INFO *route;
+    uint8_t clockDomain = process->clockDomain;
     IPC_MSG_AUDIO *src, *sink, *stream;
-    uint8_t channels;
+    unsigned i, channel, frame, channels;
     int32_t *in, *out;
-    uint8_t inChannel, outChannel;
-    unsigned frame;
-    unsigned channel;
-    int32_t sample;
-    unsigned i;
     cycle_t startCycles;
     cycle_t finalCycles;
-    uint8_t attenuationShift;
-
-    if (routeInfo == NULL) {
-        return;
-    }
 
     START_CYCLE_COUNT(startCycles);
 
-    /* Run all routes associated with this clock domain */
-    for (i = 0; i < routeInfo->numRoutes; i++) {
+    src = streamInfo[IPC_STREAMID_SHARC0_IN];
+    sink = streamInfo[IPC_STREAMID_SHARC0_OUT];
 
-        route = &routeInfo->routes[i];
-
-        if (route->srcID == IPC_STREAMID_UNKNOWN) {
-            continue;
-        }
-        if (route->sinkID == IPC_STREAMID_UNKNOWN) {
-            continue;
-        }
-
-        src = streamInfo[route->srcID];
-        sink = streamInfo[route->sinkID];
-
-        if ((src == NULL) || (sink == NULL)) {
-            continue;
-        }
-
-        if (src->clockDomain != clockDomain) {
-            continue;
-        }
-        if (sink->clockDomain != clockDomain) {
-            continue;
-        }
+    if ((src == NULL) || (sink == NULL)) {
+        return;
+    }
+    if (src->clockDomain != clockDomain) {
+        return;
+    }
+    if (sink->clockDomain != clockDomain) {
+        return;
+    }
 
 #if 1
-        if (src->numFrames != sink->numFrames) {
-            continue;
-        }
-        if (src->wordSize != sink->wordSize) {
-            continue;
-        }
-        if (src->wordSize != sizeof(int32_t)) {
-            continue;
-        }
-        if (route->srcOffset >= src->numChannels) {
-            continue;
-        }
-        if (route->sinkOffset >= sink->numChannels) {
-            continue;
-        }
+    if (src->numFrames != sink->numFrames) {
+        return;
+    }
+    if (src->wordSize != sink->wordSize) {
+        return;
+    }
+    if (src->wordSize != sizeof(int32_t)) {
+        return;
+    }
 #endif
 
-        inChannel = route->srcOffset;
-        outChannel = route->sinkOffset;
+    channels = (src->numChannels < sink->numChannels) ?
+        src->numChannels : sink->numChannels;
+    in = src->data;
+    out = sink->data;
 
-        channels = route->channels;
-        in = src->data + inChannel;
-        out = sink->data + outChannel;
-
-        attenuationShift = route->attenuation / 6;
-
-        for (frame = 0; frame < src->numFrames; frame++) {
-            for (channel = 0; channel < channels; channel++) {
-                if ((outChannel + channel) < sink->numChannels) {
-                    if ((inChannel + channel) < src->numChannels) {
-                        sample = *(in + channel);
-                    } else {
-                        sample = 0;
-                    }
-                    *(out + channel) = sample >> attenuationShift;
-                }
-            }
-            in += src->numChannels;
-            out += sink->numChannels;
+    for (frame = 0; frame < src->numFrames; frame++) {
+        for (channel = 0; channel < channels; channel++) {
+            *(out + channel) = *(in + channel);
         }
-
+        in += src->numChannels;
+        out += sink->numChannels;
     }
+
+    /* Clear the contents of src/in buffer */
+    memset(src->data, 0,
+                src->numChannels * src->numFrames * src->wordSize);
 
     /* Invalidate all streams associated with this clock domain */
     for (i = 0; i < IPC_STREAM_ID_MAX; i++) {
@@ -132,43 +100,21 @@ static void routeAudio(uint8_t clockDomain)
 
     STOP_CYCLE_COUNT(finalCycles, startCycles);
 
-    if (clockDomain < IPC_CYCLE_DOMAIN_MAX) {
+    if (cyclesMsg &&(clockDomain < IPC_CYCLE_DOMAIN_MAX)) {
         IPC_MSG *msg = sae_getMsgBufferPayload(cyclesMsg);
         msg->cycles.cycles[clockDomain] = finalCycles;
     }
-
 }
 
-/*
- * All audio SPORT interrupts (CODEC, SPDIF, A2B) have been hardware aligned
- * at startup by gating their respective bit clocks until all
- * SPORTs have been configured then turning on all clocks at once.  The
- * SPORTs count down exactly 1 frame of bit clocks before starting. This
- * is initiated on the ARM side in init.c -> enable_sport_mclk()
- *
- * The USB RX/TX, WAV src/sink, and RTP sink piggy-back off of their
- * associated clock domain to function like time aligned SPORTs.
- *
- */
 static void newAudio(IPC_MSG_AUDIO *audio)
 {
     bool clear = false;
     bool unknown = false;
 
     switch (audio->streamID) {
-        case IPC_STREAMID_CODEC_IN:
+        case IPC_STREAMID_SHARC0_IN:
             break;
-        case IPC_STREAMID_CODEC_OUT:
-            clear = true;
-            break;
-        case IPC_STREAMID_SPDIF_IN:
-            break;
-        case IPC_STREAMID_SPDIF_OUT:
-            clear = true;
-            break;
-        case IPC_STREAMID_A2B_IN:
-            break;
-        case IPC_STREAMID_A2B_OUT:
+        case IPC_STREAMID_SHARC0_OUT:
             clear = true;
             break;
         default:
@@ -225,9 +171,7 @@ static void ipcMsgRx(SAE_CONTEXT *saeContext, SAE_MSG_BUFFER *buffer,
     SAE_MSG_BUFFER *ipcBuffer;
     SAE_RESULT result;
     IPC_MSG *msg = (IPC_MSG *)payload;
-    IPC_MSG_AUDIO *audio;
     IPC_MSG *replyMsg;
-    IPC_MSG_PROCESS_AUDIO *process;
 
     /* Process the message */
     switch (msg->type) {
@@ -239,12 +183,11 @@ static void ipcMsgRx(SAE_CONTEXT *saeContext, SAE_MSG_BUFFER *buffer,
                 sae_unRefMsgBuffer(saeContext, ipcBuffer);
             }
             break;
-        case IPC_TYPE_AUDIO:
-            audio = (IPC_MSG_AUDIO *)&msg->audio;
-            newAudio(audio);
+        case IPC_TYPE_PROCESS_AUDIO:
+            processAudio((IPC_MSG_PROCESS_AUDIO *)&msg->process);
             break;
-        case IPC_TYPE_AUDIO_ROUTING:
-            routeInfo = (IPC_MSG_ROUTING *)&msg->routes;
+        case IPC_TYPE_AUDIO:
+            newAudio((IPC_MSG_AUDIO *)&msg->audio);
             break;
         case IPC_TYPE_CYCLES:
             if (cyclesMsg) {
@@ -254,10 +197,6 @@ static void ipcMsgRx(SAE_CONTEXT *saeContext, SAE_MSG_BUFFER *buffer,
                     sae_unRefMsgBuffer(saeContext, cyclesMsg);
                 }
             }
-            break;
-        case IPC_TYPE_PROCESS_AUDIO:
-            process = (IPC_MSG_PROCESS_AUDIO *)&msg->process;
-            routeAudio(process->clockDomain);
             break;
         default:
             break;
@@ -269,19 +208,22 @@ static void ipcMsgRx(SAE_CONTEXT *saeContext, SAE_MSG_BUFFER *buffer,
 
 int main(int argc, char **argv)
 {
+    SAE_RESULT ok = SAE_RESULT_OK;
     IPC_MSG *msg;
 
     /* Initialize the SEC */
     adi_sec_Init();
 
     /* Initialize the SHARC Audio Engine */
-    sae_initialize(&saeContext, SAE_CORE_IDX_1, false);
+    sae_initialize(&saeContext, IPC_CORE_SHARC0, false);
 
     /* Create a persistent message for cycle counts */
     cyclesMsg = sae_createMsgBuffer(saeContext, sizeof(*msg), (void **)&msg);
-    msg->type = IPC_TYPE_CYCLES;
-    msg->cycles.core = IPC_CORE_SHARC0;
-    msg->cycles.max = IPC_CYCLE_DOMAIN_MAX;
+    if (cyclesMsg) {
+        msg->type = IPC_TYPE_CYCLES;
+        msg->cycles.core = IPC_CORE_SHARC0;
+        msg->cycles.max = IPC_CYCLE_DOMAIN_MAX;
+    }
 
     /* Register an IPC message Rx callback */
     sae_registerMsgReceivedCallback(saeContext, ipcMsgRx, NULL);
@@ -289,7 +231,7 @@ int main(int argc, char **argv)
     /* Tell the ARM we're ready */
     quickIpcToCore(saeContext, IPC_TYPE_SHARC0_READY, IPC_CORE_ARM);
 
-    while (1) {
+    while(1) {
         asm("nop;");
-    }
+    };
 }

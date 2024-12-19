@@ -9,21 +9,12 @@
  * software may not be used except as expressly authorized under the license.
  */
 
-/*!
- * @brief  Example configuration file enabling the umm_malloc heap
- *         allocation module.
- *
- * @file      xmodem_cfg.h
- * @version   1.0.0
- *
-*/
-
 #ifndef _XMODEM_CFG_H
 #define _XMODEM_CFG_H
 
-#include "umm_malloc.h"
+#define DLY_1S         1000000
+#define MAXSYNCTRETRY  60
 
-#define XMODEM_MALLOC  umm_malloc
-#define XMODEM_FREE    umm_free
+#define XMODEM_1K
 
 #endif

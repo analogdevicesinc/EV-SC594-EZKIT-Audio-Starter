@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2024 - Analog Devices Inc. All Rights Reserved.
  * This software is proprietary and confidential to Analog Devices, Inc.
  * and its licensors.
  *
@@ -13,7 +13,7 @@
 #define __VERSION_H__
 
 #ifndef STR_VERSION
-#define STR_VERSION      "0.0.0"
+#define STR_VERSION      "2.0.0"
 #endif
 
 #endif

@@ -1,12 +1,6 @@
 #include "spiffs.h"
 #include "spiffs_nucleus.h"
 
-/*
- * Place code/data by default in external memory
- * This code has been modified by Analog Devices, Inc.
- */
-#include "external_memory.h"
-
 #if !SPIFFS_READ_ONLY
 
 // Erases a logical block and updates the erase counter.

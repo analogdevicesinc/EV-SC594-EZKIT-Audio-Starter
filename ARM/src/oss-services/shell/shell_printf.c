@@ -9,12 +9,6 @@
  * software may not be used except as expressly authorized under the license.
  */
 
-/*
- * Place code/data by default in external memory
- * This code has been modified by Analog Devices, Inc.
- */
-#include "external_memory.h"
-
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -22,6 +16,23 @@
 #include "shell_printf.h"
 #include "term.h"
 #include "shell.h"
+
+/* Use lightweight printf */
+#include "printf.h"
+
+int shell_vprintf(SHELL_CONTEXT *ctx, const char *fmt, va_list ap)
+{
+    va_list va;
+    char *str;
+    va = ap;
+    int len = vsnprintf(NULL, 0, fmt, va);
+    va = ap;
+    str = SHELL_MALLOC(len + 1);
+    vsnprintf(str, len + 1, fmt, va);
+    term_putstr(&ctx->t, str, len);
+    SHELL_FREE(str);
+    return(len);
+}
 
 int shell_printf(SHELL_CONTEXT *ctx, const char* fmt, ...)
 {

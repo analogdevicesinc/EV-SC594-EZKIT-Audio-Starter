@@ -13,11 +13,24 @@
 #define _util_h
 
 #include <stdint.h>
+#include <stdbool.h>
+#include <time.h>
 
-void delay(unsigned ms);
+/* Sprinkled throughout source */
 uint32_t getTimeStamp(void);
+void delay(unsigned ms);
 uint32_t elapsedTimeMs(uint32_t elapsed);
-uint32_t getHiResTimeStamp(void);
+time_t util_time(time_t *tloc);
+uint32_t rtosTimeMs();
+int util_gettimeofday(struct timeval *tp, void *tzvp);
+void util_set_time_unix(struct timeval *now);
+
+/* In util.c */
+void copyAndConvert(
+    void *src, unsigned srcWordSize, unsigned srcChannels,
+    void *dst, unsigned dstWordSize, unsigned dstChannels,
+    unsigned frames, bool zero
+);
 
 uint32_t roundUpPow2(uint32_t x);
 
