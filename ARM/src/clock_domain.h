@@ -11,6 +11,8 @@
 #ifndef _clock_domain_h
 #define _clock_domain_h
 
+#include <stdbool.h>
+
 #include "context.h"
 #include "clock_domain_defs.h"
 

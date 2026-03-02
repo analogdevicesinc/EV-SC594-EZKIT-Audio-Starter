@@ -55,5 +55,6 @@ void sae_buffer_init(APP_CONTEXT *context);
 void audio_routing_init(APP_CONTEXT *context);
 
 int somcrr_hw_version(APP_CONTEXT *context);
+int som_hw_version(APP_CONTEXT *context);
 
 #endif
