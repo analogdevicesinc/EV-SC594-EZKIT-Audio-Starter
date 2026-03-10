@@ -23,6 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+ 
 /*
  * This file has been modified by Analog Devices, Inc. to add the ability to 
  * specify the field separater in the timestamp. The standard alows for a couple

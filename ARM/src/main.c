@@ -45,6 +45,7 @@
 #include "shell.h"
 #include "umm_malloc.h"
 #include "spiffs.h"
+#include "spiffs_fs.h"
 
 /* Project includes */
 #include "context.h"
@@ -57,16 +58,16 @@
 #include "vban_audio.h"
 #include "a2b_slave.h"
 #include "clock_domain.h"
-#include "spiffs_fs.h"
 #include "cpu_load.h"
 #include "task_cfg.h"
-#include "ss_init.h"
 #include "a2b_irq.h"
 #include "uac2.h"
 #include "ethernet_init.h"
 #include "ipc.h"
 #include "pushbutton.h"
 #include "exception.h"
+#include "ss_init.h"
+#include "cces_hacks.h"
 
 /* Application context */
 APP_CONTEXT mainAppContext;
@@ -406,6 +407,9 @@ static portTASK_FUNCTION( startupTask, pvParameters )
     FS_DEVMAN_RESULT fsdResult;
     s32_t spiffsResult;
 
+    /* This thread uses stdio */
+    THREAD_INIT_STDIO();
+
     /* Install exception handlers */
     exception_init();
 
@@ -466,14 +470,15 @@ static portTASK_FUNCTION( startupTask, pvParameters )
     context->a2bTwiHandle = context->twi2Handle;
     context->si5356Handle = context->twi2Handle;
 
+    /*
+     * Get the HW Versions, used for setting up HW specific functionality
+     * on the variants of the carrier and SOMs of the same type.
+     */
+    context->SoMVersion = som_hw_version(context);
+    context->SoMCRRVersion = somcrr_hw_version(context);
+    
     /* Initialize the soft switches */
     ss_init(context);
-
-    /*
-     * Get the SOMCRR Version.  This function also sets compatible default
-     * soft switch values for Rev D SOMCRR boards.
-     */
-    context->SoMCRRVersion = somcrr_hw_version(context);
 
     /* Init the SHARC Audio Engine.  This core is configured to be the
      * IPC master so this function must run to completion before any
@@ -620,6 +625,12 @@ int main(int argc, char *argv[])
 {
     APP_CONTEXT *context = &mainAppContext;
     UART_SIMPLE_RESULT uartResult;
+
+    /*
+     * Make sure the _GLOBAL_REENT structure is initialized before any
+     * threads start.
+     */
+    _REENT_SMALL_CHECK_INIT(_GLOBAL_REENT);
 
     /* Initialize the application context */
     memset(context, 0, sizeof(*context));

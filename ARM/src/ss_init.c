@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2022 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
  * This software is proprietary and confidential to Analog Devices, Inc.
  * and its licensors.
  *
@@ -9,87 +9,157 @@
  * software may not be used except as expressly authorized under the license.
  */
 
+#include "ss.h"
 #include "ss_init.h"
+#include "Mcp2301x.h"
 
-/* Init prototypes */
-void ss_init_somcrr_ezkit(APP_CONTEXT *context);
-void ss_init_sc594_som(APP_CONTEXT *context);
+/* 
+ * HW Specific Prototypes - Note in this case there is only one set
+ * of HW specific API as all available soft switches use the same
+ * hardware IC. If more ICs are added, or changed, those 
+ * prototypes and specific implementations should be handled below
+ * and each pins should be correspondingly mapped to that specific
+ * HW implementation via the T_SS_HW_FP structure.
+ */
+static void ss_hw_init(int deviceId);
+static void ss_hw_deinit(int deviceId);
+static int ss_hw_set(int deviceId, int portId, int pinId, bool value);
+static int ss_hw_get(int deviceId, int portId, int pinId, bool *value);
+static int ss_hw_get_portpin(int deviceId, int sysPinId, int * portId, int * pinId);
 
-/* Set prototypes */
-bool ss_set_somcrr_ezkit(APP_CONTEXT *context, int pinId, bool value);
-bool ss_set_sc594_som(APP_CONTEXT *context, int pinId, bool value);
+static const T_SS_HW_FP sSSFP = 
+{
+    .pfSSInit       = ss_hw_init, 
+    .pfSSDeInit     = ss_hw_deinit, 
+    .pfSSGet        = ss_hw_get, 
+    .pfSSSet        = ss_hw_set, 
+    .pfSSGetPortPin = ss_hw_get_portpin
+};
 
-/* Get prototypes */
-bool ss_get_somcrr_ezkit(APP_CONTEXT *context, int pinId, bool *value);
-bool ss_get_sc594_som(APP_CONTEXT *context, int pinId, bool *value);
-
-/* Convenience macros */
-#define CRR_GET ss_get_somcrr_ezkit
-#define SOM_GET ss_get_sc594_som
-#define CRR_SET ss_set_somcrr_ezkit
-#define SOM_SET ss_set_sc594_som
-
-typedef struct _SS_PIN {
-    int pinId;
-    SS_GET get;
-    SS_SET set;
-} SS_PIN;
-
-static SS_PIN SS_PINS[] = {
-    /* Carrier */
-    { .pinId = SS_PIN_ID_nADAU1979_EN, .get = CRR_GET, .set = CRR_SET},
-    { .pinId = SS_PIN_ID_nADAU_1962_EN, .get = CRR_GET, .set = CRR_SET},
-    { .pinId = SS_PIN_ID_nADAU_RESET, .get = CRR_GET, .set = CRR_SET},
-    { .pinId = SS_PIN_ID_nCAN_EN, .get = CRR_GET, .set = CRR_SET},
-    { .pinId = SS_PIN_ID_nFTDI_USB_EN, .get = CRR_GET, .set = CRR_SET},
-    { .pinId = SS_PIN_ID_nMicroSD_SPI, .get = CRR_GET, .set = CRR_SET},
-    { .pinId = SS_PIN_ID_PUSHBUTTON_EN, .get = CRR_GET, .set = CRR_SET},
-    { .pinId = SS_PIN_ID_EEPROM_EN, .get = CRR_GET, .set = CRR_SET},
-    { .pinId = SS_PIN_ID_nGIGe_RESET, .get = CRR_GET, .set = CRR_SET},
-    { .pinId = SS_PIN_ID_nETH1_RESET, .get = CRR_GET, .set = CRR_SET},
-    { .pinId = SS_PIN_ID_nETH1_EN, .get = CRR_GET, .set = CRR_SET},
-    { .pinId = SS_PIN_ID_nMLB_EN, .get = CRR_GET, .set = CRR_SET},
-    { .pinId = SS_PIN_ID_AUDIO_JACK_SEL, .get = CRR_GET, .set = CRR_SET},
-    { .pinId = SS_PIN_ID_nSPDIF_OPTICAL_EN, .get = CRR_GET, .set = CRR_SET},
-    { .pinId = SS_PIN_ID_nSPDIF_DIGITAL_EN, .get = CRR_GET, .set = CRR_SET},
-    { .pinId = SS_PIN_ID_OCTAL_SPI_CS_EN, .get = CRR_GET, .set = CRR_SET},
-    /* SOM */
-    { .pinId = SS_PIN_ID_nUART0_FLOW_EN, .get = SOM_GET, .set = SOM_SET},
-    { .pinId = SS_PIN_ID_nUART0_EN, .get = SOM_GET, .set = SOM_SET},
-    { .pinId = SS_PIN_ID_nSPID2_D3_EN, .get = SOM_GET, .set = SOM_SET},
-    { .pinId = SS_PIN_ID_nSPI2FLASH_CS_EN, .get = SOM_GET, .set = SOM_SET},
-    { .pinId = SS_PIN_ID_LED4, .get = SOM_GET, .set = SOM_SET},
-    { .pinId = SS_PIN_ID_LED2, .get = SOM_GET, .set = SOM_SET},
-    { .pinId = SS_PIN_ID_LED5, .get = SOM_GET, .set = SOM_SET},
-    { .pinId = SS_PIN_ID_MAX, .get = NULL, .set = NULL}
+/* 
+ * Hardware Configuration for all available pins on all soft switches -
+ * Noting that anything that is switchable due to hardware differences in 
+ * SOM or EZKIT revisions of the same type are updated during initialization 
+ * below.
+ */
+static T_SS_PIN_CONFIG asSSPinConfigRegistry[SS_PIN_ID_MAX] = 
+{
+   /* Carrier */
+   {.ePinId = SS_PIN_ID_nADAU1979_EN,      .deviceId = -1,                               .psHwFP = (T_SS_HW_FP *)&sSSFP},
+   {.ePinId = SS_PIN_ID_nADAU_1962_EN,     .deviceId = -1,                               .psHwFP = (T_SS_HW_FP *)&sSSFP},
+   {.ePinId = SS_PIN_ID_nADAU_RESET,       .deviceId = -1,                               .psHwFP = (T_SS_HW_FP *)&sSSFP},
+   {.ePinId = SS_PIN_ID_nCAN_EN,           .deviceId = -1,                               .psHwFP = (T_SS_HW_FP *)&sSSFP},
+   {.ePinId = SS_PIN_ID_nFTDI_USB_EN,      .deviceId = -1,                               .psHwFP = (T_SS_HW_FP *)&sSSFP},
+   {.ePinId = SS_PIN_ID_nMicroSD_SPI,      .deviceId = -1,                               .psHwFP = (T_SS_HW_FP *)&sSSFP},
+   {.ePinId = SS_PIN_ID_PUSHBUTTON_EN,     .deviceId = -1,                               .psHwFP = (T_SS_HW_FP *)&sSSFP},
+   {.ePinId = SS_PIN_ID_EEPROM_EN,         .deviceId = -1,                               .psHwFP = (T_SS_HW_FP *)&sSSFP},
+   {.ePinId = SS_PIN_ID_nGIGe_RESET,       .deviceId = -1,                               .psHwFP = (T_SS_HW_FP *)&sSSFP},
+   {.ePinId = SS_PIN_ID_nETH1_RESET,       .deviceId = -1,                               .psHwFP = (T_SS_HW_FP *)&sSSFP},
+   {.ePinId = SS_PIN_ID_nETH1_EN,          .deviceId = -1,                               .psHwFP = (T_SS_HW_FP *)&sSSFP},
+   {.ePinId = SS_PIN_ID_nMLB_EN,           .deviceId = -1,                               .psHwFP = (T_SS_HW_FP *)&sSSFP},
+   {.ePinId = SS_PIN_ID_AUDIO_JACK_SEL,    .deviceId = -1,                               .psHwFP = (T_SS_HW_FP *)&sSSFP},
+   {.ePinId = SS_PIN_ID_nSPDIF_OPTICAL_EN, .deviceId = -1,                               .psHwFP = (T_SS_HW_FP *)&sSSFP},
+   {.ePinId = SS_PIN_ID_nSPDIF_DIGITAL_EN, .deviceId = -1,                               .psHwFP = (T_SS_HW_FP *)&sSSFP},
+   {.ePinId = SS_PIN_ID_OCTAL_SPI_CS_EN,   .deviceId = -1,                               .psHwFP = (T_SS_HW_FP *)&sSSFP},
+   /* SOM */
+   {.ePinId = SS_PIN_ID_nOSPIFLASH_CS_EN,  .deviceId = (int)E_MCP2301X_DEVICE_SC594_SOM, .psHwFP = (T_SS_HW_FP *)&sSSFP},
+   {.ePinId = SS_PIN_ID_nUART0_FLOW_EN,    .deviceId = (int)E_MCP2301X_DEVICE_SC594_SOM, .psHwFP = (T_SS_HW_FP *)&sSSFP},
+   {.ePinId = SS_PIN_ID_nUART0_EN,         .deviceId = (int)E_MCP2301X_DEVICE_SC594_SOM, .psHwFP = (T_SS_HW_FP *)&sSSFP},
+   {.ePinId = SS_PIN_ID_nSPID2_D3_EN,      .deviceId = (int)E_MCP2301X_DEVICE_SC594_SOM, .psHwFP = (T_SS_HW_FP *)&sSSFP},
+   {.ePinId = SS_PIN_ID_nSPI2FLASH_CS_EN,  .deviceId = (int)E_MCP2301X_DEVICE_SC594_SOM, .psHwFP = (T_SS_HW_FP *)&sSSFP},
+   {.ePinId = SS_PIN_ID_LED4,              .deviceId = (int)E_MCP2301X_DEVICE_SC594_SOM, .psHwFP = (T_SS_HW_FP *)&sSSFP},
+   {.ePinId = SS_PIN_ID_LED2,              .deviceId = (int)E_MCP2301X_DEVICE_SC594_SOM, .psHwFP = (T_SS_HW_FP *)&sSSFP},
+   {.ePinId = SS_PIN_ID_LED5,              .deviceId = (int)E_MCP2301X_DEVICE_SC594_SOM, .psHwFP = (T_SS_HW_FP *)&sSSFP},
 };
 
 bool ss_get(APP_CONTEXT *context, int pinId, bool *value)
 {
-    SS_PIN *pin = SS_PINS;
-    while (pin->pinId != SS_PIN_ID_MAX) {
-        if (pin->pinId == pinId) {
-            return(pin->get(context, pinId, value));
-        }
-        pin++;
+    bool bSuccess;
+
+    /* Local Inits */
+    bSuccess = false;
+
+    if(softswitch_get(pinId, value) == E_SS_STATUS_OK)
+    {
+        bSuccess = true;
     }
-    return(false);
+
+    return(bSuccess);
 }
 
 bool ss_set(APP_CONTEXT *context, int pinId, bool value)
 {
-    SS_PIN *pin = SS_PINS;
-    while (pin->pinId != SS_PIN_ID_MAX) {
-        if (pin->pinId == pinId) {
-            return(pin->set(context, pinId, value));
-        }
-        pin++;
+    bool bSuccess;
+
+    /* Local Inits */
+    bSuccess = false;
+
+    if(softswitch_set(pinId, value) == E_SS_STATUS_OK)
+    {
+        bSuccess = true;
     }
-    return(false);
+    
+    return(bSuccess);
 }
 
 void ss_init(APP_CONTEXT *context)
 {
-    ss_init_somcrr_ezkit(context);
-    ss_init_sc594_som(context);
+    uint8_t u8PinIdx;
+    int     hwDeviceId;
+    
+    if(context->SoMCRRVersion == SOMCRR_REV_D)
+    {
+        hwDeviceId = (int)E_MCP2301X_DEVICE_EZKIT_REV_D;
+    }
+    else if(context->SoMCRRVersion == SOMCRR_REV_A)
+    {
+        hwDeviceId = (int)E_MCP2301X_DEVICE_EZKIT_REV_A;
+    }
+    else
+    {
+        hwDeviceId = (int)E_MCP2301X_DEVICE_EZKIT_HW_PROBE;
+    }
+    
+    for(u8PinIdx = 0U; u8PinIdx < SS_PIN_ID_MAX; u8PinIdx++)
+    {
+        if((u8PinIdx >= SS_PIN_ID_nADAU1979_EN) && (u8PinIdx < SS_PIN_ID_nOSPIFLASH_CS_EN))
+        {
+            asSSPinConfigRegistry[u8PinIdx].deviceId = hwDeviceId;
+        }
+    }
+    
+    softswitch_init((T_SS_PIN_CONFIG *)&asSSPinConfigRegistry);
+}
+
+void ss_deinit(APP_CONTEXT *context)
+{
+    softswitch_deinit();
+}
+
+/******************************************************************************
+ *   Static Helpers
+ ******************************************************************************/
+static void ss_hw_init(int deviceId)
+{
+    (void)Mcp2301x_Init(deviceId);
+}
+
+static void ss_hw_deinit(int deviceId)
+{
+    (void)Mcp2301x_DeInit(deviceId);
+}
+
+static int ss_hw_get(int deviceId, int portId, int pinId, bool *value)
+{
+    return((int)Mcp2301x_ReadPin(deviceId, portId, pinId, value));
+}
+
+static int ss_hw_set(int deviceId, int portId, int pinId, bool value)
+{
+    return((int)Mcp2301x_WritePin(deviceId, portId, pinId, value));
+}
+
+static int ss_hw_get_portpin(int deviceId, int sysPinId, int * portId, int * pinId)
+{
+    return((int)Mcp2301x_GetPortPin(deviceId, sysPinId, (T_MCP2301X_PORT * const)portId, (T_MCP2301X_PIN * const)pinId));
 }

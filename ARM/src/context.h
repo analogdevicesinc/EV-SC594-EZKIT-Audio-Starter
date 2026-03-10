@@ -47,6 +47,9 @@
 #define SOMCRR_REV_A   100
 #define SOMCRR_REV_D   400
 
+/* SoM Versions */
+#define SOM_REV_C      100
+
 /*
  * WARNING: Do not change SYSTEM_AUDIO_TYPE from int32_t
  *
@@ -101,8 +104,22 @@
  * at runtime. Use the 'a2b' command to set the I2C address at runtime to
  * match the HW.
  *
- * By default AD242x boards have address 0x68 and AD243x boards have
+ * By default AD2428MINI boards have address 0x68 and AD2433MINI boards have
  * address 0x6A
+ *
+ * It is not possible to have two AD2433MINI modules attached to J10 and
+ * J11 simultaneously.  Two AD2428MINI modules can be attached as long as
+ * they are configured for different I2C addresses via P4.
+ *
+ * With the default settings, AD242x modules should be plugged into
+ * J10 and AD243x modules should be plugged into J11.
+ *
+ * WARNING: AD2433MINI modules cannot be attached to J11 when using a SC598 SoM
+ * due to a conflict on the SC598 pin PB_15. This pin is shared between the
+ * onboard SoM eMMC and the SoM carrier board A2B2_RESET (AD2433MINI HW_RST).
+ * When using an SC598 SoM and an AD2433MINI, plug the AD2433MINI module
+ * into J10 (A2B) and invert the default I2C addresses below.
+ *
  */
 #define DEFAULT_A2B_I2C_ADDR        (0x68)
 #define DEFAULT_A2B2_I2C_ADDR       (0x6A)
@@ -199,6 +216,18 @@ typedef struct _USB_AUDIO_STATS {
     USB_AUDIO_TX_STATS tx;
 } USB_AUDIO_STATS;
 
+/* WAV src stats */
+typedef struct _WAV_SRC_STATS {
+    unsigned underrun;
+    unsigned slowReads;
+} WAV_SRC_STATS;
+
+/* WAV sink stats */
+typedef struct _WAV_SINK_STATS {
+    unsigned overrun;
+    unsigned slowWrites;
+} WAV_SINK_STATS;
+
 /*
  * The main application context.  Used as a container to carry a
  * variety of useful pointers, handles, etc., between various
@@ -208,6 +237,7 @@ typedef struct _APP_CONTEXT {
 
     /* SoM Carrier Version */
     int SoMCRRVersion;
+    int SoMVersion;
 
     /* Core clock frequency */
     uint32_t cclk;
@@ -335,6 +365,8 @@ typedef struct _APP_CONTEXT {
     void *wavSrcRBData;
     PaUtilRingBuffer *wavSinkRB;
     void *wavSinkRBData;
+    WAV_SRC_STATS wavSrcStats;
+    WAV_SINK_STATS wavSinkStats;
 
     /* RTP related variables and settings */
     RTP_STREAM rtpRx;

@@ -51,6 +51,7 @@ ARM_SRC_DIRS += \
 	ALL/src \
 	ALL/src/sae \
 	ARM \
+	ARM/include \
 	ARM/src \
 	ARM/src/simple-drivers \
 	ARM/src/simple-services/adau1962 \
@@ -66,10 +67,13 @@ ARM_SRC_DIRS += \
 	ARM/src/simple-services/adi-osal-minimal \
 	ARM/src/simple-services/uac2-cdc-soundcard \
 	ARM/src/simple-services/fs-dev \
+	ARM/src/simple-services/getline \
 	ARM/src/simple-services/rtp-stream \
 	ARM/src/simple-services/vban-stream \
 	ARM/src/simple-services/wav-file \
 	ARM/src/simple-services/telnet \
+	ARM/src/simple-services/mcp2301x \
+	ARM/src/simple-services/soft-switch \
 	ARM/src/oss-services/lwip/core \
 	ARM/src/oss-services/lwip/core/ipv4 \
 	ARM/src/oss-services/lwip/netif \
@@ -85,7 +89,7 @@ ARM_SRC_DIRS += \
 	ARM/src/oss-services/spiffs \
 	ARM/src/oss-services/libtelnet \
 	ARM/src/oss-services/kilo \
-	ARM/src/oss-services/getline \
+	ARM/src/oss-services/getopt \
 	ARM/src/oss-services/printf \
 	ARM/src/oss-services/c-timestamp \
 	ARM/src/oss-services/FatFs \
@@ -124,10 +128,10 @@ ARM_STATIC_LIBS = ../ARM/lib/cld_sc594_audio_2_0_w_cdc_lib_Core0.a
 ARM_DEPS = $(foreach depdir, $(ARM_DST_DIRS), $(wildcard $(depdir)/*.d))
 
 #
-# Define the compiler/assembler flags
+# Define the project compiler flags
 #
-# __ADI_FREERTOS : Define only when using the ADI OSAL
-# EMAC1_ENABLE : Define to enable EMAC1
+# __ADI_FREERTOS : Define ONLY when using the original ADI OSAL
+# EMAC1_ENABLE : Define to enable EMAC1 (conflicts with USBC0)
 # SHARC_AUDIO_ENABLE : Define to enable SHARC core audio processing
 # A2B2_J10 : Define if using an ADAA245x MINI module for A2B on J10 to
 #            redirect A2B2 audio channels from J11 to J10.
@@ -137,16 +141,30 @@ ARM_CFLAGS += $(ARM_OPTIMIZE) $(BUILD_RELEASE) $(BUILD_RTOS) $(ARM_INCLUDE_DIRS)
 ARM_CFLAGS += -Wall -Wno-unused-but-set-variable -Wno-unused-function
 ARM_CFLAGS += -gdwarf-2 -ffunction-sections -fdata-sections
 ARM_CFLAGS += -mproc=$(PROC) -msi-revision=$(SI_REVISION) -DCORE0
-ARM_CFLAGS += -DSAE_IPC -DFREE_RTOS
-#ARM_CFLAGS += -D__ADI_FREERTOS
+ARM_CFLAGS += -madi-threads -DFREE_RTOS
+ARM_CFLAGS += -DSAE_IPC
 ARM_CFLAGS += -DFEATURE_CPU_LOAD
 ARM_CFLAGS += -DUSBC0_ENABLE
 #ARM_CFLAGS += -DEMAC1_ENABLE
 ARM_CFLAGS += -DUSB_CDC_STDIO
 ARM_CFLAGS += -DSHARC_AUDIO_ENABLE
 #ARM_CFLAGS += -DA2B2_J10
+#ARM_CFLAGS += -D__ADI_FREERTOS
 
+#
+# Define the project assembler flags
+#
 ARM_AFLAGS = -x assembler-with-cpp -mproc=$(PROC) -msi-revision=$(SI_REVISION) -gdwarf-2 -DCORE0
+
+#
+# Define the project linker flags
+#
+# Enable to wrap the DeviceIO _dev_open/_dev_close functions
+ARM_LINK_FLAGS = -Wl,--wrap=_dev_open -Wl,--wrap=_dev_close
+# Enable to wrap and debug system malloc/calloc/realloc/free
+#ARM_LINK_FLAGS += -Wl,--wrap=_malloc_r -Wl,--wrap=_calloc_r -Wl,--wrap=_realloc_r -Wl,--wrap=_free_r
+# Enable to output verbose link output
+#ARM_LINK_FLAGS += -Wl,--verbose
 
 ARM_OBJS = $(ARM_ASM_OBJ) $(ARM_C_OBJ)
 ARM_OBJS_FILE = .lobjs_arm
@@ -168,7 +186,7 @@ $(ARM_DST)/%.o: ../%.S
 # Create the ARM executable
 $(ARM_EXE): $(ARM_OBJS) $(ARM_STATIC_LIBS)
 	@echo $^ > $(ARM_OBJS_FILE)
-	$(ARM_CC) -mproc=$(PROC) -msi-revision=$(SI_REVISION) -T"ARM-$(PROJECT).ld" -Wl,-Map=$(PROJECT)-ARM.map -Wl,--gc-sections -madi-threads -mdebug-libs -o "$@" @$(ARM_OBJS_FILE) -lm
+	$(ARM_CC) -mproc=$(PROC) -msi-revision=$(SI_REVISION) -T"ARM-$(PROJECT).ld"  $(ARM_LINK_FLAGS) -Wl,-Map=$(PROJECT)-ARM.map -Wl,--gc-sections -madi-threads -mdebug-libs -o "$@" @$(ARM_OBJS_FILE) -lm
 
 # Use order-only-prerequisites for directories
 $(ARM_OBJS): | $(ARM_DST_DIRS)

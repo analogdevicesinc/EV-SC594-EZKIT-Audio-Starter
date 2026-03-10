@@ -13,7 +13,7 @@
 
 ssize_t shell_edit_write(void *usr, const void *buf, size_t len);
 ssize_t shell_edit_read(void *usr, const void *buf, size_t len);
-ssize_t getline(char **buf, size_t *bufsiz, FILE *fp);
+ssize_t getline(char ** lineptr, size_t * n, FILE * stream);
 
 #include "umm_malloc.h"
 #define KILO_MALLOC  umm_malloc

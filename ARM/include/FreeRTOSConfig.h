@@ -28,8 +28,6 @@
 #ifndef FREERTOS_CONFIG_H
 #define FREERTOS_CONFIG_H
 
-#include "clocks.h"
-
 #if defined(__ADSPSC589_FAMILY__)
 #include <defSC589.h>
 #elif defined(__ADSPSC594_FAMILY__)
@@ -39,6 +37,8 @@
 #else
 #error Unsupported processor!
 #endif
+
+#include "clocks.h"
 
 /*-----------------------------------------------------------
  * Application specific definitions.
@@ -96,7 +96,7 @@ the stacks used by the tasks are allocated from this array):
 #define configUSE_TICK_HOOK                     0
 #define configMAX_PRIORITIES                    ( 7 )
 #define configMINIMAL_STACK_SIZE                ( ( unsigned short ) 512 )
-#define configTOTAL_HEAP_SIZE                   ( 512 * 1024 )
+#define configTOTAL_HEAP_SIZE                   ( 256 * 1024 )
 #define configMAX_TASK_NAME_LEN                 ( 32 )
 #define configUSE_TRACE_FACILITY                0
 #define configUSE_16_BIT_TICKS                  0
